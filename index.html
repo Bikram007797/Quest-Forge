@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestForge - Gamify Task Manager</title>
+    
+    <!-- IMPORTANT: Add this FIRST - alternative Tailwind CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.0/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Development version of React -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    
+    <!-- Add this meta tag to ensure proper mobile rendering -->
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <style>
+    /* Ensure the app takes full height on mobile */
+    html, body, #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Mobile-First Responsive Design */
+    * {
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    
+    button, input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    body {
+        overflow-x: hidden;
+        background: linear-gradient(135deg, #1e293b 0%, #581c87 50%, #1e293b 100%);
+        font-family: Arial, sans-serif;
+        color: white;
+    }
+
+    button {
+        -webkit-tap-highlight-color: transparent;
+        padding: 12px 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+
+    input, textarea {
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+    
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+</style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const QuestForge = () => {
+            const [appState, setAppState] = React.useState('login');
+            const [selectedUser, setSelectedUser] = React.useState(null);
+            const [filterCategory, setFilterCategory] = React.useState('All Items');
+            const [viewingProfile, setViewingProfile] = React.useState(null);
+            const [showStore, setShowStore] = React.useState(false);
+            const [touchStart, setTouchStart] = React.useState(null);
+const [touchEnd, setTouchEnd] = React.useState(null);
+
+const handleTouchStart = (e) => {
+  setTouchStart(e.targetTouches[0].clientX);
+};
+
+const handleTouchEnd = (e) => {
+  setTouchEnd(e.changedTouches[0].clientX);
+  handleSwipe(touchStart, e.changedTouches[0].clientX);
+};
+
+const handleSwipe = (start, end) => {
+  if (!start || !end) return;
+  const distance = start - end;
+  const isLeftSwipe = distance > 50;
+  const isRightSwipe = distance < -50;
+
+  if (isRightSwipe && appState !== 'login') {
+    if (appState === 'dashboard') handleLogout();
+    else if (appState === 'profile' || appState === 'store' || appState === 'fame') {
+      setAppState('dashboard');
+    }
+  }
+};
+
+  // Initialize userData from localStorage or use default values
+  const getInitialUserData = () => {
+    const savedData = localStorage.getItem('questForgeUserData');
+    if (savedData) {
+      return JSON.parse(savedData);
+    }
+    return {
+      Bikram: {
+        totalXP: 500,
+        spentXP: 0,
+        inventory: [],
+        equippedItems: [],
+        avatarId: 0,
+        avatarName: 'Shadow Knight',
+        publishedProfile: null,
+        purchaseHistory: []
+      },
+      Piyali: {
+        totalXP: 750,
+        spentXP: 0,
+        inventory: [],
+        equippedItems: [],
+        avatarId: 2,
+        avatarName: 'Crystal Sage',
+        publishedProfile: null,
+        purchaseHistory: []
+      }
+    };
+  };
+
+  const [userData, setUserData] = React.useState(getInitialUserData());
+
+  const [currentUser, setCurrentUser] = React.useState(null);
+
+  React.useEffect(() => {
+    if (userData) {
+      localStorage.setItem('questForgeUserData', JSON.stringify(userData));
+    }
+  }, [userData]);
+
+  const avatarUrls = [
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Sarah',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Andrea',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Mason',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Brian',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Aidan',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Luis',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Destiny',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Vivian',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=George',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Kingston',
+    'https://api.dicebear.com/9.x/notionists/svg?seed=Emery',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Vivian',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Christian',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Leah',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Destiny',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sophia',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Kimberly',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sadie',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Jack',
+    'https://api.dicebear.com/9.x/lorelei/svg?seed=Andrea',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Avery',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Aiden',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Jameson',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Emery',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Brian',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Brooklynn',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Oliver',
+    'https://api.dicebear.com/9.x/adventurer/svg?seed=Mason',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Chase',
+    'https://api.dicebear.com/9.x/bottts/svg?seed=Sadie'
+  ];
+
+  const levelRanges = [
+    { level: 1, min: 0, max: 100, name: 'Novice Explorer' },
+    { level: 2, min: 101, max: 250, name: 'Apprentice Scholar' },
+    { level: 3, min: 251, max: 450, name: 'Learner Adept' },
+    { level: 4, min: 451, max: 700, name: 'Knowledge Seeker' },
+    { level: 5, min: 701, max: 1000, name: 'Mind Master' },
+    { level: 6, min: 1001, max: 1350, name: 'Wisdom Keeper' },
+    { level: 7, min: 1351, max: 1750, name: 'Sage Tier' },
+    { level: 8, min: 1751, max: 2200, name: 'Scholar Elite' },
+    { level: 9, min: 2201, max: 2700, name: 'Knowledge King' },
+    { level: 10, min: 2701, max: 3250, name: 'Intellect Ascended' },
+    { level: 11, min: 3251, max: 3850, name: 'Legendary Thinker' },
+    { level: 12, min: 3851, max: 4500, name: 'Mythic Scholar' },
+    { level: 13, min: 4501, max: 5000, name: 'Ultimate Sage' }
+  ];
+
+  const rewards = [
+  { id: 1, name: 'Iron Sword', hp: 0.625, price: 10, category: 'Weapons', desc: 'Increases focus during study sessions', emoji: '🗡️' },
+  { id: 2, name: 'Steel Mace', hp: 0.75, price: 15, category: 'Weapons', desc: 'Boosts memory retention', emoji: '🔨' },
+  { id: 3, name: 'Ancient Staff', hp: 0.875, price: 20, category: 'Weapons', desc: 'Enhances analytical thinking', emoji: '📚' },
+  { id: 4, name: 'Golden Bow', hp: 0.75, price: 15, category: 'Weapons', desc: 'Sharpens precision', emoji: '🏹' },
+  { id: 5, name: 'Cursed Blade', hp: 1, price: 30, category: 'Weapons', desc: 'Ultimate study power', emoji: '⚡' },
+  
+  { id: 6, name: 'Iron Armor', hp: 0.625, price: 10, category: 'Armor', desc: 'Protects against distractions', emoji: '🛡️' },
+  { id: 7, name: 'Steel Plate', hp: 0.75, price: 15, category: 'Armor', desc: 'Shields procrastination', emoji: '🧥' },
+  { id: 8, name: 'Mithril Chest', hp: 0.875, price: 20, category: 'Armor', desc: 'Legendary defense', emoji: '👑' },
+  { id: 9, name: 'Dragon Scale', hp: 0.75, price: 15, category: 'Armor', desc: 'Builds confidence', emoji: '💎' },
+  { id: 10, name: 'Void Cloak', hp: 1, price: 30, category: 'Armor', desc: 'Ultimate protection', emoji: '🌑' },
+  
+  { id: 11, name: 'Deep Focus', hp: 0.625, price: 10, category: 'Skills', desc: 'Longer sessions', emoji: '🧠' },
+  { id: 12, name: 'Speed Reading', hp: 0.75, price: 15, category: 'Skills', desc: 'Process faster', emoji: '⚡' },
+  { id: 13, name: 'Perfect Recall', hp: 0.875, price: 20, category: 'Skills', desc: 'Never forget', emoji: '🎯' },
+  { id: 14, name: 'Knowledge Synthesis', hp: 0.75, price: 15, category: 'Skills', desc: 'Connect concepts', emoji: '🔮' },
+  { id: 15, name: 'Mastery Aura', hp: 1, price: 30, category: 'Skills', desc: 'Unstoppable learning', emoji: '🌟' },
+  
+  { id: 16, name: 'Energy Potion', hp: 0.625, price: 10, category: 'Consumables', desc: 'Restore stamina', emoji: '🧪' },
+  { id: 17, name: 'Wisdom Elixir', hp: 0.75, price: 15, category: 'Consumables', desc: 'Clarity of mind', emoji: '💊' },
+  { id: 18, name: 'Inspiration Flask', hp: 0.875, price: 20, category: 'Consumables', desc: 'Creative spark', emoji: '🔥' },
+  { id: 19, name: 'Phoenix Tears', hp: 0.75, price: 15, category: 'Consumables', desc: 'Recover fast', emoji: '💧' },
+  { id: 20, name: 'Omniscience Brew', hp: 1, price: 30, category: 'Consumables', desc: 'Transcend limits', emoji: '✨' }
+];
+
+  const [newXPInput, setNewXPInput] = React.useState('');
+  
+  React.useEffect(() => {
+    const savedData = localStorage.getItem('questForgeUserData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setUserData(parsed);
+      } catch (e) {
+        console.error('Failed to parse saved data:', e);
+      }
+    }
+  }, []);
+
+  const handleLogin = () => {
+    if (!selectedUser) {
+      alert('Please select a user');
+      return;
+    }
+
+    // If new XP is provided, validate and update
+    if (newXPInput.trim()) {
+      const xpValue = parseFloat(newXPInput);
+      if (isNaN(xpValue) || xpValue < 0) {
+        alert('Please enter a valid positive number for XP');
+        return;
+      }
+      
+      // Update user data with new XP
+      const newUserData = {
+        ...userData,
+        [selectedUser]: {
+          ...userData[selectedUser],
+          totalXP: xpValue
+        }
+      };
+      setUserData(newUserData);
+      localStorage.setItem('questForgeUserData', JSON.stringify(newUserData));
+    }
+    
+    setCurrentUser(selectedUser);
+    setAppState('dashboard');
+  };
+
+  const handleLogout = () => {
+    setAppState('login');
+    setCurrentUser(null);
+    setSelectedUser(null);
+    setViewingProfile(null);
+  };
+
+  const getUserLevel = (xp) => {
+    return levelRanges.find(l => xp >= l.min && xp <= l.max) || levelRanges[12];
+  };
+
+  const getXpProgress = (xp) => {
+    const level = getUserLevel(xp);
+    const levelXpRange = level.max - level.min;
+    const currentLevelXp = xp - level.min;
+    return (currentLevelXp / levelXpRange) * 100;
+  };
+
+ const getTotalPower = (user) => {
+  const inventory = userData[user].inventory;
+  const equipped = userData[user].equippedItems;
+  
+  const power = equipped.reduce((sum, itemId) => {
+    const item = rewards.find(r => r.id === itemId);
+    const inventoryItem = inventory.find(inv => inv.itemId === itemId);
+    const quantity = inventoryItem ? inventoryItem.quantity : 1;
+    return sum + (item ? item.hp * quantity : 0);
+  }, 0);
+  
+  return Math.min(power, 100);
+};
+
+  const getRank = (power) => {
+    const ranks = [
+      { name: 'RECRUIT', stars: 1 },
+      { name: 'PRIVATE', stars: 2 },
+      { name: 'CORPORAL', stars: 3 },
+      { name: 'SERGEANT', stars: 4 },
+      { name: 'STAFF SERGEANT', stars: 5 },
+      { name: 'LIEUTENANT', stars: 6 },
+      { name: 'CAPTAIN', stars: 7 },
+      { name: 'MAJOR', stars: 8 },
+      { name: 'COLONEL', stars: 9 },
+      { name: 'GENERAL', stars: 10 }
+    ];
+    const rankIndex = Math.floor(power / 10);
+    return ranks[Math.min(rankIndex, 9)];
+  };
+
+  const handleBuyItem = (item) => {
+    const user = currentUser;
+    const remaining = userData[user].totalXP - userData[user].spentXP;
+    
+    if (remaining < item.price) {
+      alert(`Not enough XP! Need ${item.price} but have ${remaining}`);
+      return;
+    }
+
+    const newUserData = JSON.parse(JSON.stringify(userData));
+    const inventory = newUserData[user].inventory;
+    const existingItem = inventory.find(i => i.itemId === item.id);
+    
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      inventory.push({ itemId: item.id, quantity: 1 });
+    }
+
+    newUserData[user].spentXP += item.price;
+    
+    const history = newUserData[user].purchaseHistory;
+    const historyItem = history.find(h => h.itemId === item.id);
+    if (historyItem) {
+      historyItem.count += 1;
+    } else {
+      history.push({ itemId: item.id, count: 1 });
+    }
+
+    setUserData(newUserData);
+  };
+
+  const handleEquipItem = (itemId) => {
+    const user = currentUser;
+    const newUserData = JSON.parse(JSON.stringify(userData));
+    const equipped = newUserData[user].equippedItems;
+    
+    if (equipped.includes(itemId)) {
+      newUserData[user].equippedItems = equipped.filter(id => id !== itemId);
+    } else {
+      newUserData[user].equippedItems = [...equipped, itemId];
+    }
+    
+    setUserData(newUserData);
+  };
+
+  const handleSellItem = (itemId) => {
+    const user = currentUser;
+    const item = rewards.find(r => r.id === itemId);
+    const newUserData = JSON.parse(JSON.stringify(userData));
+    
+    const inventoryItem = newUserData[user].inventory.find(i => i.itemId === itemId);
+    if (inventoryItem) {
+      inventoryItem.quantity -= 1;
+      if (inventoryItem.quantity === 0) {
+        newUserData[user].inventory = newUserData[user].inventory.filter(i => i.itemId !== itemId);
+      }
+    }
+
+    newUserData[user].spentXP -= item.price;
+    newUserData[user].equippedItems = newUserData[user].equippedItems.filter(id => id !== itemId);
+    
+    setUserData(newUserData);
+  };
+
+  const handlePublishProfile = () => {
+    const user = currentUser;
+    const userLevel = getUserLevel(userData[user].totalXP);
+    const power = getTotalPower(user);
+    const rank = getRank(power);
+
+    const newUserData = JSON.parse(JSON.stringify(userData));
+    newUserData[user].publishedProfile = {
+      avatarUrl: avatarUrls[userData[user].avatarId],
+      avatarName: userData[user].avatarName,
+      user: user,
+      level: userLevel.level,
+      levelName: userLevel.name,
+      rank: rank.name,
+      stars: rank.stars,
+      power: power,
+      totalXP: userData[user].totalXP,
+      equippedCount: userData[user].equippedItems.length,
+      timestamp: new Date().toLocaleDateString()
+    };
+    setUserData(newUserData);
+    alert('✅ Profile Published Successfully! 🎉');
+  };
+
+  const getFilteredItems = () => {
+    const user = currentUser;
+    let items = [];
+
+    switch (filterCategory) {
+      case 'All Items':
+        // Show all available items from the rewards list
+        items = rewards.map(item => {
+          const inventoryItem = userData[user].inventory.find(inv => inv.itemId === item.id);
+          return {
+            ...item,
+            quantity: inventoryItem ? inventoryItem.quantity : 0,
+            isInInventory: !!inventoryItem,
+            isEquipped: userData[user].equippedItems.includes(item.id)
+          };
+        });
+        break;
+
+      case 'Purchased':
+        // Show only items in inventory that aren't equipped
+        items = userData[user].inventory
+          .filter(inv => !userData[user].equippedItems.includes(inv.itemId))
+          .map(inv => {
+            const item = rewards.find(r => r.id === inv.itemId);
+            return {
+              ...item,
+              quantity: inv.quantity,
+              isInInventory: true,
+              isEquipped: false
+            };
+          });
+        break;
+
+      case 'Equipped':
+        // Show only equipped items
+        items = userData[user].equippedItems.map(itemId => {
+          const item = rewards.find(r => r.id === itemId);
+          const inventoryItem = userData[user].inventory.find(inv => inv.itemId === itemId);
+          return {
+            ...item,
+            quantity: inventoryItem ? inventoryItem.quantity : 0,
+            isInInventory: true,
+            isEquipped: true
+          };
+        });
+        break;
+
+      case 'Weapons':
+      case 'Armor':
+      case 'Skills':
+      case 'Consumables':
+        // Show all items of the selected category
+        items = rewards
+          .filter(item => item.category === filterCategory)
+          .map(item => {
+            const inventoryItem = userData[user].inventory.find(inv => inv.itemId === item.id);
+            return {
+              ...item,
+              quantity: inventoryItem ? inventoryItem.quantity : 0,
+              isInInventory: !!inventoryItem,
+              isEquipped: userData[user].equippedItems.includes(item.id)
+            };
+          });
+        break;
+    }
+
+    return items;
+  };
+
+if (viewingProfile) {
+  const profile = viewingProfile;
+  
+  return (
+    <div 
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <style>{`
+        .card {
+          width: 100%;
+          max-width: 320px;
+          background-color: #ffd700;
+          border-radius: 15px;
+          overflow: hidden;
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+          background: linear-gradient(135deg, #a88a00 0%, #ffeb95 20%, #ffd700 40%, #ffeb95 60%, #a88a00 100%);
+          border: 3px solid #ffeb95;
+          transition: transform 0.8s ease-in-out;
+          transform-style: preserve-3d;
+          cursor: pointer;
+        }
+        .card.rotate {
+          transform: rotateY(360deg);
+        }
+        .card-image { padding: 10px 10px 5px 10px; background-color: #000; }
+        .card-image img { width: 100%; height: auto; display: block; border-radius: 5px; }
+        .card-body { padding: 10px; color: #000; }
+        .character-name { text-align: center; margin: 0 0 5px 0; font-size: 1.6em; padding: 5px 0; background-color: rgba(0, 0, 0, 0.1); color: #000; text-shadow: 1px 1px 1px #fff; border-radius: 3px; font-weight: bold; }
+        .character-username { text-align: center; margin: 0 0 10px 0; font-size: 0.85em; color: #333; font-weight: normal; }
+        .properties { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background-color: rgba(255, 255, 255, 0.2); border-radius: 3px; font-size: 0.95em; font-weight: 500; }
+        .label { font-weight: normal; text-align: left; }
+        .value { font-weight: bold; text-align: right; }
+        .star { font-size: 1.3em; }
+        .timestamp { text-align: center; margin-top: 15px; font-size: 0.7em; color: #333; font-weight: normal; }
+      `}</style>
+
+      <div className="flex flex-col items-center gap-6 w-full">
+        <div 
+          className="card" 
+          onClick={(e) => {
+            e.currentTarget.classList.toggle('rotate');
+          }}
+        >
+          <div className="card-image">
+            <img src={profile.avatarUrl} alt="Profile Avatar" />
+          </div>
+          <div className="card-body">
+            <h1 className="character-name">{profile.avatarName}</h1>
+            <p className="character-username">@{profile.user}</p>
+            <div className="properties">
+              <div className="row">
+                <span className="label">Level :</span>
+                <span className="value">{profile.level}</span>
+              </div>
+              <div className="row">
+                <span className="label">Total XP :</span>
+                <span className="value">{profile.totalXP} XP</span>
+              </div>
+              <div className="row">
+                <span className="label">Rank :</span>
+                <span className="value">{profile.rank}</span>
+              </div>
+              <div className="row">
+                <span className="label">Skills :</span>
+                <span className="value">{profile.equippedCount}</span>
+              </div>
+              <div className="row">
+                <span className="label">Star :</span>
+                <span className="value star">{'⭐'.repeat(profile.stars)}</span>
+              </div>
+              <div className="row">
+                <span className="label">Power :</span>
+                <span className="value">{profile.power.toFixed(1)}%</span>
+              </div>
+            </div>
+            <div className="timestamp">
+              Published: {profile.timestamp}
+            </div>
+          </div>
+        </div>
+
+        <button 
+          onClick={() => setViewingProfile(null)} 
+          className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-8 py-4 rounded-lg font-bold transition w-full max-w-xs"
+        >
+          ← Back
+        </button>
+      </div>
+    </div>
+  );
+}
+ if (appState === 'login') {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4">
+      <style>{`
+        @keyframes pulse-glow { 0%, 100% { text-shadow: 0 0 20px rgba(168, 85, 247, 0.5); } 50% { text-shadow: 0 0 40px rgba(168, 85, 247, 1); } }
+        .pulse-title { animation: pulse-glow 2s ease-in-out infinite; }
+      `}</style>
+
+      <div className="text-center mb-8 w-full">
+        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 pulse-title mb-2">
+          ⚔️ QuestForge
+        </h1>
+        <p className="text-base text-yellow-300 mb-1">Craft Your Learning Adventure</p>
+        <p className="text-xs text-purple-300">Powered by Study Gamification</p>
+      </div>
+
+      <div className="w-full max-w-xs">
+        <div className="bg-slate-800 border-2 border-purple-500 rounded-lg p-6 shadow-2xl">
+          <h2 className="text-xl font-bold text-white mb-5 text-center">Select Your Warrior</h2>
+
+          <div className="flex flex-col gap-3 mb-6">
+            {['Bikram', 'Piyali'].map((user) => (
+              <button
+                key={user}
+                onClick={() => setSelectedUser(user)}
+                className={`w-full p-4 rounded-lg font-bold transition-all duration-300 active:scale-95 ${
+                  selectedUser === user
+                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg shadow-yellow-400'
+                    : 'bg-slate-700 text-white'
+                }`}
+              >
+                {user}
+              </button>
+            ))}
+          </div>
+
+          <div className="mb-5 bg-slate-700 p-4 rounded-lg">
+            <p className="text-white text-xs font-semibold mb-2">Last Saved XP</p>
+            {selectedUser ? (
+              <p className="text-2xl font-bold text-yellow-400">{userData[selectedUser].totalXP} XP</p>
+            ) : (
+              <p className="text-gray-400 text-sm">Select a user</p>
+            )}
+          </div>
+
+          <div className="mb-6 bg-slate-700 p-4 rounded-lg">
+            <label className="block text-white text-xs font-semibold mb-2">
+              New XP Value (Optional)
+            </label>
+            <input
+              type="number"
+              value={newXPInput}
+              onChange={(e) => setNewXPInput(e.target.value)}
+              placeholder="Enter new XP"
+              className="w-full bg-slate-600 text-white border border-purple-400 rounded p-3 text-sm"
+            />
+          </div>
+
+          <button
+            onClick={handleLogin}
+            disabled={!selectedUser}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-95 text-white font-bold py-4 rounded-lg transition-all duration-300 disabled:opacity-50 text-base"
+          >
+            Enter Quest
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ if (appState === 'dashboard') {
+  return (
+    <div 
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="bg-slate-900 border-b-2 border-purple-600 p-4">
+        <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 mb-2">⚔️ QuestForge</h1>
+        <h2 className="text-sm text-gray-300">Welcome, {currentUser}! 🎮</h2>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-md mx-auto">
+        <h1 className="text-2xl font-bold text-center text-white mb-8">Choose Your Path</h1>
+        
+        <div className="grid grid-cols-1 gap-4 w-full">
+          {[
+            { title: 'Profile', desc: 'Manage avatar & view stats', icon: '👤', action: 'profile' },
+            { title: 'Reward Store', desc: 'Buy and sell items', icon: '🪙', action: 'store' },
+            { title: 'Wall of Fame', desc: 'View published profiles', icon: '🏆', action: 'fame' }
+          ].map((card, i) => (
+            <div
+              key={i}
+              onClick={() => setAppState(card.action)}
+              className="bg-gradient-to-br from-purple-700 to-slate-800 border-2 border-yellow-400 p-6 rounded-xl cursor-pointer active:scale-95 transition-transform duration-200 touch-manipulation"
+            >
+              <div className="text-4xl mb-3">{card.icon}</div>
+              <h3 className="text-xl font-bold text-white mb-1">{card.title}</h3>
+              <p className="text-sm text-gray-300">{card.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-slate-900 border-t-2 border-purple-600 p-4 flex gap-3 justify-center">
+        <button 
+          onClick={() => alert('✅ Data Refreshed Successfully!')} 
+          className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-4 py-3 rounded-lg font-semibold transition text-sm"
+        >
+          🔄 Refresh
+        </button>
+        <button 
+          onClick={handleLogout} 
+          className="flex-1 bg-red-600 hover:bg-red-700 active:scale-95 text-white px-4 py-3 rounded-lg font-semibold transition text-sm"
+        >
+          🚪 Logout
+        </button>
+      </div>
+    </div>
+  );
+}
+
+  if (appState === 'profile') {
+    const user = currentUser;
+    const userLevel = getUserLevel(userData[user].totalXP);
+    const power = getTotalPower(user);
+    const rank = getRank(power);
+    const remaining = userData[user].totalXP - userData[user].spentXP;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+          <button onClick={() => setAppState('dashboard')} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">← Main Menu</button>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">Profile</h1>
+          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold">🚪 Logout</button>
+        </div>
+
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8 flex flex-col items-center">
+            <div className="relative mb-6">
+              <div className="w-48 h-48 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-xl shadow-purple-500 border-4 border-yellow-400 overflow-hidden">
+                <img src={avatarUrls[userData[user].avatarId]} alt="avatar" className="w-full h-full object-cover" />
+              </div>
+            </div>
+
+            <h2 className="text-2xl font-bold text-white mb-4">{userData[user].avatarName}</h2>
+            
+            <div className="w-full mb-6">
+              <input
+                type="text"
+                value={userData[user].avatarName}
+                onChange={(e) => {
+                  const newData = JSON.parse(JSON.stringify(userData));
+                  newData[user].avatarName = e.target.value;
+                  setUserData(newData);
+                }}
+                className="w-full bg-slate-700 text-white border border-purple-400 rounded p-2 text-center"
+                placeholder="Give your Avatar a name"
+              />
+            </div>
+
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <button
+                onClick={() => {
+                  const newId = (userData[user].avatarId - 1 + avatarUrls.length) % avatarUrls.length;
+                  const newData = JSON.parse(JSON.stringify(userData));
+                  newData[user].avatarId = newId;
+                  setUserData(newData);
+                }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold p-3 rounded-full transition transform hover:scale-110 shadow-lg"
+              >
+                ←
+              </button>
+              
+              <div className="text-sm text-gray-400">
+                {userData[user].avatarId + 1} / {avatarUrls.length}
+              </div>
+
+              <button
+                onClick={() => {
+                  const newId = (userData[user].avatarId + 1) % avatarUrls.length;
+                  const newData = JSON.parse(JSON.stringify(userData));
+                  newData[user].avatarId = newId;
+                  setUserData(newData);
+                }}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold p-3 rounded-full transition transform hover:scale-110 shadow-lg"
+              >
+                →
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8">
+            <div className="mb-6 pb-6 border-b border-purple-500">
+              <h3 className="text-xl font-bold text-yellow-300 mb-2">Level {userLevel.level}</h3>
+              <p className="text-gray-300">{userLevel.name}</p>
+              <div className="w-full bg-slate-700 rounded-full h-3 mt-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
+                  style={{ width: `${getXpProgress(userData[user].totalXP)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="bg-slate-700 p-4 rounded">
+                <p className="text-gray-400 text-sm">Total XP</p>
+                <p className="text-2xl font-bold text-yellow-400">{userData[user].totalXP}</p>
+              </div>
+              <div className="bg-slate-700 p-4 rounded">
+                <p className="text-gray-400 text-sm">Remaining XP</p>
+                <p className="text-2xl font-bold text-green-400">{remaining}</p>
+              </div>
+              <div className="bg-slate-700 p-4 rounded">
+                <p className="text-gray-400 text-sm">Power (HP)</p>
+                <p className="text-2xl font-bold text-red-400">{power.toFixed(1)}/100</p>
+              </div>
+              <div className="bg-slate-700 p-4 rounded">
+                <p className="text-gray-400 text-sm">Rank</p>
+                <p className="text-2xl font-bold text-purple-400">{rank.name}</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-700 p-4 rounded mb-6">
+              <p className="text-gray-400 text-sm mb-2">Rank Stars</p>
+              <p className="text-3xl">{'⭐'.repeat(rank.stars)}</p>
+            </div>
+
+            <div className="bg-slate-700 p-4 rounded mb-6">
+              <p className="text-gray-400 text-sm">Items Equipped</p>
+              <p className="text-2xl font-bold text-yellow-400">{userData[user].equippedItems.length}</p>
+            </div>
+
+            <button
+              onClick={() => {
+                handlePublishProfile();
+              }}
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 rounded-lg transition"
+            >
+              📤 Publish Profile
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+    // ENTIRE STORE PAGE - Replace the whole if (appState === 'store') section with this clean version
+
+if (appState === 'store') {
+  const user = currentUser;
+  const remaining = userData[user].totalXP - userData[user].spentXP;
+  const displayItems = getFilteredItems() || [];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+      <div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
+        <button 
+          onClick={() => setAppState('dashboard')} 
+          className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-3 rounded-lg font-bold text-xs sm:text-sm transition flex-1"
+        >
+          Main Menu
+        </button>
+        <h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
+          Reward Store
+        </h1>
+        <button 
+          onClick={handleLogout} 
+          className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-3 rounded-lg font-bold text-xs sm:text-sm transition flex-1"
+        >
+          Logout
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-12">
+          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg text-gray-400 mb-1">Available XP</h3>
+                <p className="text-3xl font-bold text-green-400">{remaining} XP</p>
+              </div>
+              <div className="flex flex-col items-center">
+                <p className="text-sm text-gray-400 mb-2">Total Purchased</p>
+                <div className="h-20 w-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
+                  <span className="text-3xl font-bold text-white">{userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[
+                { id: 'All Items', label: 'All' },
+                { id: 'Purchased', label: 'Purchased' },
+                { id: 'Equipped', label: 'Equipped' }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setFilterCategory(cat.id)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition text-sm ${
+                    filterCategory === cat.id
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg'
+                      : 'bg-slate-700 text-white hover:bg-slate-600'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-center mt-2">
+              {[
+                { id: 'Weapons', label: 'Weapons' },
+                { id: 'Armor', label: 'Armor' },
+                { id: 'Skills', label: 'Skills' },
+                { id: 'Consumables', label: 'Potions' }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setFilterCategory(cat.id)}
+                  className={`px-4 py-2 rounded-lg font-semibold transition text-sm ${
+                    filterCategory === cat.id
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg'
+                      : 'bg-slate-700 text-white hover:bg-slate-600'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {displayItems.length === 0 ? (
+            <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8 text-center">
+              <p className="text-gray-300 text-lg">No items found in this category.</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {displayItems.map((item) => {
+                const showBuyButton = filterCategory === 'All Items' || ['Weapons', 'Armor', 'Skills', 'Consumables'].includes(filterCategory);
+                const showSellButton = item.isInInventory;
+                const showEquipButton = item.isInInventory && !item.isEquipped;
+                const showUnequipButton = item.isEquipped;
+                
+                return (
+                  <div key={item.id} 
+                    className={`bg-slate-800 border-2 ${
+                      item.isEquipped ? 'border-yellow-400' : 'border-purple-500'
+                    } rounded-lg p-6 hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center relative`}
+                  >
+                    <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+                      HP: {item.hp}
+                    </div>
+                    
+                    <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold">
+                      {item.price} XP
+                    </div>
+                    
+                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-4xl mb-4 mt-6">
+                      {item.emoji}
+                    </div>
+                    
+                    <h4 className="text-white font-bold mb-1">{item.name}</h4>
+                    <p className="text-purple-300 text-xs mb-4">{item.category}</p>
+                    
+                    {item.quantity > 0 && (
+                      <div className="text-green-400 font-bold text-sm mb-3">
+                        Owned: ×{item.quantity}
+                      </div>
+                    )}
+                    
+                    <div className="flex flex-col gap-2 w-full">
+                      {showBuyButton && (
+                        <button
+                          onClick={() => handleBuyItem(item)}
+                          disabled={remaining < item.price}
+                          className={`w-full py-2 rounded font-bold text-sm transition ${
+                            remaining >= item.price
+                              ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
+                              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          Buy
+                        </button>
+                      )}
+                      
+                      {(showEquipButton || showUnequipButton) && (
+                        <button
+                          onClick={() => handleEquipItem(item.id)}
+                          className={`w-full py-2 rounded font-bold text-sm transition ${
+                            showUnequipButton
+                              ? 'bg-red-600 hover:bg-red-700 text-white'
+                              : 'bg-blue-600 hover:bg-blue-700 text-white'
+                          }`}
+                        >
+                          {showUnequipButton ? 'Unequip' : 'Equip'}
+                        </button>
+                      )}
+                      
+                      {showSellButton && (
+                        <button
+                          onClick={() => handleSellItem(item.id)}
+                          className="w-full py-2 rounded font-bold text-sm bg-orange-600 hover:bg-orange-700 text-white transition"
+                        >
+                          Sell
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {userData[user].purchaseHistory.length > 0 && (
+          <div className="mt-12 bg-slate-800 border-2 border-purple-500 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">Purchase History</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Total Items:</span>
+                <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold">
+                  {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)}
+                </span>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {userData[user].purchaseHistory.map((hist) => {
+                const item = rewards.find(r => r.id === hist.itemId);
+                return (
+                  <div key={hist.itemId} 
+                    className="bg-gradient-to-br from-slate-700 to-slate-800 p-4 rounded-lg border border-purple-400 hover:border-yellow-400 transition-all duration-300"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center text-2xl">
+                        {item.emoji}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-white font-bold text-sm leading-tight mb-1">{item.name}</h4>
+                        <p className="text-purple-300 text-xs">{item.category}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-sm">Quantity</span>
+                      <span className="text-yellow-300 font-bold text-lg">×{hist.count}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+  if (appState === 'fame') {
+    const allProfiles = [];
+    
+    if (userData.Bikram.publishedProfile) {
+      allProfiles.push({ ...userData.Bikram.publishedProfile, id: 'bikram' });
+    }
+    if (userData.Piyali.publishedProfile) {
+      allProfiles.push({ ...userData.Piyali.publishedProfile, id: 'piyali' });
+    }
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
+          <button onClick={() => setAppState('dashboard')} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">← Main Menu</button>
+          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">Wall of Fame</h1>
+          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold">🚪 Logout</button>
+        </div>
+
+        <div className="max-w-6xl mx-auto">
+          {allProfiles.length === 0 ? (
+            <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-12 text-center">
+              <p className="text-gray-300 text-xl">No profiles published yet. Be the first to publish your profile!</p>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-8">
+              {allProfiles.map((profile) => (
+                <div
+                  key={profile.id}
+                  className="bg-gradient-to-br from-yellow-600 via-yellow-500 to-orange-600 rounded-2xl p-8 shadow-2xl shadow-yellow-500 hover:scale-105 transition-transform duration-300"
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg mb-4 border-4 border-white overflow-hidden">
+                      <img src={profile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                    </div>
+                    
+                    <h2 className="text-3xl font-bold text-white drop-shadow-lg mb-1">{profile.avatarName}</h2>
+                    <p className="text-xl text-gray-900 font-semibold mb-4">@{profile.user}</p>
+                    
+                    <div className="w-full bg-white bg-opacity-30 rounded-lg p-4 mb-4 backdrop-blur">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-900 font-semibold">Level</p>
+                          <p className="text-2xl font-bold text-white">{profile.level}</p>
+                          <p className="text-xs text-gray-100">{profile.levelName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-900 font-semibold">Total XP</p>
+                          <p className="text-2xl font-bold text-yellow-100">{profile.totalXP}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-900 font-semibold">Power</p>
+                          <p className="text-2xl font-bold text-red-300">{profile.power.toFixed(1)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-900 font-semibold">Items</p>
+                          <p className="text-2xl font-bold text-purple-200">{profile.equippedCount}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="w-full mb-4">
+                      <p className="text-sm text-gray-900 font-semibold mb-2">Military Rank</p>
+                      <p className="text-2xl font-bold text-white drop-shadow-lg">{profile.rank}</p>
+                      <p className="text-2xl">{'⭐'.repeat(profile.stars)}</p>
+                    </div>
+
+                    <p className="text-xs text-gray-800 mb-4">Published: {profile.timestamp}</p>
+
+                    <button
+                      onClick={() => setViewingProfile(profile)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition"
+                    >
+                      👁️ View Profile Card
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+        // Mount the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<QuestForge />);
+    </script>
+</body>
+</html>
