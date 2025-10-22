@@ -12,6 +12,9 @@
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <!-- ADD THESE FIREBASE SCRIPTS -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
     <!-- Add this meta tag to ensure proper mobile rendering -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -64,8 +67,24 @@
 <body>
     <div id="root"></div>
 
-    <script type="text/babel">
-        const QuestForge = () => {
+   <script type="text/babel">
+    // ===== FIREBASE INITIALIZATION =====
+    const firebaseConfig = {
+      apiKey: "AIzaSyBO-M54POwDhyEkfgyH84fblkOKrfgclck",
+      authDomain: "questforge-bd8e8.firebaseapp.com",
+      projectId: "questforge-bd8e8",
+      storageBucket: "questforge-bd8e8.firebasestorage.app",
+      messagingSenderId: "573584114891",
+      appId: "1:573584114891:web:a8aa4645c2b859a335474e"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // ===== END FIREBASE INITIALIZATION =====
+
+    const QuestForge = () => {
             const [appState, setAppState] = React.useState('login');
             const [selectedUser, setSelectedUser] = React.useState(null);
             const [filterCategory, setFilterCategory] = React.useState('All Items');
@@ -98,11 +117,8 @@ const handleSwipe = (start, end) => {
 };
 
   // Initialize userData from localStorage or use default values
-  const getInitialUserData = () => {
-    const savedData = localStorage.getItem('questForgeUserData');
-    if (savedData) {
-      return JSON.parse(savedData);
-    }
+ const getInitialUserData = () => {
+    // Return default data - Firebase will load real data
     return {
       Bikram: {
         totalXP: 500,
@@ -128,14 +144,49 @@ const handleSwipe = (start, end) => {
   };
 
   const [userData, setUserData] = React.useState(getInitialUserData());
+const [currentUser, setCurrentUser] = React.useState(null);
+const [loading, setLoading] = React.useState(true);
 
-  const [currentUser, setCurrentUser] = React.useState(null);
+// ===== LOAD DATA FROM FIREBASE =====
+React.useEffect(() => {
+  const loadDataFromFirebase = async () => {
+    try {
+      const docRef = db.collection('questforge').doc('userData');
+      const doc = await docRef.get();
+      
+      if (doc.exists) {
+        console.log('✅ Data loaded from Firebase');
+        setUserData(doc.data());
+      } else {
+        console.log('📝 No data in Firebase, using defaults');
+        // Save default data to Firebase
+        await docRef.set(getInitialUserData());
+      }
+    } catch (error) {
+      console.error('❌ Firebase load error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  loadDataFromFirebase();
+}, []);
+// ===== END LOAD FROM FIREBASE =====
 
   React.useEffect(() => {
-    if (userData) {
-      localStorage.setItem('questForgeUserData', JSON.stringify(userData));
+    if (userData && !loading) {
+      // Save to Firebase
+      const saveToFirebase = async () => {
+        try {
+          await db.collection('questforge').doc('userData').set(userData);
+          console.log('✅ Data saved to Firebase');
+        } catch (error) {
+          console.error('❌ Firebase save error:', error);
+        }
+      };
+      saveToFirebase();
     }
-  }, [userData]);
+  }, [userData, loading]);
 
   const avatarUrls = [
     'https://api.dicebear.com/9.x/notionists/svg?seed=Sarah',
