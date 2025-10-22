@@ -825,8 +825,19 @@ if (loading) {
                 <p className="text-2xl font-bold text-green-400">{remaining}</p>
               </div>
               <div className="bg-slate-700 p-4 rounded">
-                <p className="text-gray-400 text-sm">Power (HP)</p>
-                <p className="text-2xl font-bold text-red-400">{power.toFixed(1)}/100</p>
+               <p className="text-gray-400 text-sm">Power (HP)</p>
+<p
+  className={`text-2xl font-bold ${
+    power > 70
+      ? "text-green-400"
+      : power > 35
+      ? "text-yellow-400"
+      : "text-red-400"
+  }`}
+>
+  {power.toFixed(1)}%
+</p>
+
               </div>
               <div className="bg-slate-700 p-4 rounded">
                 <p className="text-gray-400 text-sm">Rank</p>
