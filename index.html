@@ -411,11 +411,14 @@ setUserData(newUserData);
     setUserData(newUserData);
   };
 
-  const handlePublishProfile = () => {
+ const handlePublishProfile = () => {
     const user = currentUser;
     const userLevel = getUserLevel(userData[user].totalXP);
     const power = getTotalPower(user);
     const rank = getRank(power);
+
+    // Calculate total purchased items
+    const totalPurchased = userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0);
 
     const newUserData = JSON.parse(JSON.stringify(userData));
     newUserData[user].publishedProfile = {
@@ -429,12 +432,12 @@ setUserData(newUserData);
       power: power,
       totalXP: userData[user].totalXP,
       equippedCount: userData[user].equippedItems.length,
+      totalPurchased: totalPurchased,
       timestamp: new Date().toLocaleDateString()
     };
     setUserData(newUserData);
     alert('✅ Profile Published Successfully! 🎉');
   };
-
   const getFilteredItems = () => {
     const user = currentUser;
     let items = [];
