@@ -265,17 +265,7 @@ React.useEffect(() => {
 
   const [newXPInput, setNewXPInput] = React.useState('');
   
-  React.useEffect(() => {
-    const savedData = localStorage.getItem('questForgeUserData');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        setUserData(parsed);
-      } catch (e) {
-        console.error('Failed to parse saved data:', e);
-      }
-    }
-  }, []);
+  
 
   const handleLogin = () => {
     if (!selectedUser) {
@@ -293,14 +283,14 @@ React.useEffect(() => {
       
       // Update user data with new XP
       const newUserData = {
-        ...userData,
-        [selectedUser]: {
-          ...userData[selectedUser],
-          totalXP: xpValue
-        }
-      };
-      setUserData(newUserData);
-      localStorage.setItem('questForgeUserData', JSON.stringify(newUserData));
+  ...userData,
+  [selectedUser]: {
+    ...userData[selectedUser],
+    totalXP: xpValue
+  }
+};
+setUserData(newUserData);
+// Firebase auto-saves via useEffect - no manual save needed!
     }
     
     setCurrentUser(selectedUser);
@@ -608,7 +598,19 @@ if (viewingProfile) {
     </div>
   );
 }
- if (appState === 'login') {
+ // Show loading screen while Firebase loads
+if (loading) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-6xl mb-4">⚔️</div>
+        <h2 className="text-2xl font-bold text-white mb-2">Loading QuestForge...</h2>
+        <p className="text-purple-300">Connecting to Cloud ☁️</p>
+      </div>
+    </div>
+  );
+}
+        if (appState === 'login') {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4">
       <style>{`
