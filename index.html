@@ -744,12 +744,24 @@ if (loading) {
     const remaining = userData[user].totalXP - userData[user].spentXP;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-          <button onClick={() => setAppState('dashboard')} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">← Main Menu</button>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">Profile</h1>
-          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold">🚪 Logout</button>
-        </div>
+     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+<div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
+<button
+onClick={() => setAppState('dashboard')}
+className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-3 rounded-lg font-bold text-xs sm:text-sm transition flex-1"
+>
+Main Menu
+</button>
+<h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
+Profile
+</h1>
+<button
+onClick={handleLogout}
+className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-3 rounded-lg font-bold text-xs sm:text-sm transition flex-1"
+>
+Logout
+</button>
+</div>
 
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
           <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8 flex flex-col items-center">
@@ -864,7 +876,7 @@ if (loading) {
               }}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-3 rounded-lg transition"
             >
-              📤 Publish Profile
+            Publish Profile
             </button>
           </div>
         </div>
@@ -1096,11 +1108,23 @@ if (appState === 'store') {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-        <div className="flex justify-between items-center mb-8 flex-wrap gap-4">
-          <button onClick={() => setAppState('dashboard')} className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-bold">← Main Menu</button>
-          <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">Wall of Fame</h1>
-          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-bold">🚪 Logout</button>
-        </div>
+<div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
+<button
+onClick={() => setAppState('dashboard')}
+className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-3 rounded-lg font-bold text-xs sm:text-sm transition flex-1"
+>
+Main Menu
+</button>
+<h1 className="text-xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
+Wall of Fame
+</h1>
+<button
+onClick={handleLogout}
+className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-3 rounded-lg font-bold text-xs sm:text-sm transition flex-1"
+>
+Logout
+</button>
+</div>
 
         <div className="max-w-6xl mx-auto">
           {allProfiles.length === 0 ? (
@@ -1156,7 +1180,7 @@ if (appState === 'store') {
                       onClick={() => setViewingProfile(profile)}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition"
                     >
-                      👁️ View Profile Card
+                      View Profile Card
                     </button>
                   </div>
                 </div>
