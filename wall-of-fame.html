@@ -321,27 +321,6 @@
         audioContext.current = new (window.AudioContext || window.webkitAudioContext)();
       }, []);
 
-      // Function to parse timestamp and convert to Date object
-      const parseTimestamp = (timestamp) => {
-        if (!timestamp) return new Date(0);
-        
-        try {
-          if (typeof timestamp === 'string') {
-            if (timestamp.includes('/')) {
-              const parts = timestamp.split('/');
-              if (parts.length === 3) {
-                return new Date(parts[2], parts[0] - 1, parts[1]);
-              }
-            }
-            return new Date(timestamp);
-          }
-          return new Date(timestamp);
-        } catch (e) {
-          console.log('Timestamp parsing error:', e);
-          return new Date(0);
-        }
-      };
-
       // Sound effects functions
       const playLikeSound = () => {
         if (!audioContext.current) return;
@@ -382,6 +361,39 @@
         }
       };
 
+      // FIXED: Format timestamp to show date AND time
+      const formatTimestamp = (timestamp) => {
+        if (!timestamp) return 'Date not available';
+        
+        try {
+          // Parse the ISO string timestamp
+          const date = new Date(timestamp);
+          
+          // Check if date is valid
+          if (isNaN(date.getTime())) {
+            return 'Date not available';
+          }
+          
+          // Format: "Oct 29, 2025 at 2:30 PM"
+          const dateStr = date.toLocaleDateString('en-US', { 
+            year: 'numeric',
+            month: 'short', 
+            day: 'numeric'
+          });
+          
+          const timeStr = date.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          });
+          
+          return `Published: ${dateStr} at ${timeStr}`;
+        } catch (e) {
+          console.log('Date formatting error:', e);
+          return 'Date not available';
+        }
+      };
+
       // Load data from Firebase
       React.useEffect(() => {
         const loadDataFromFirebase = async () => {
@@ -403,7 +415,7 @@
                   userId: 'Bikram',
                   likes: data.Bikram.publishedProfile.likes || 0,
                   totalLikes: data.Bikram.totalLikes || 0,
-                  parsedTimestamp: parseTimestamp(data.Bikram.publishedProfile.timestamp),
+                  parsedTimestamp: new Date(data.Bikram.publishedProfile.timestamp),
                   likeAnimation: false,
                   countAnimation: false
                 });
@@ -415,7 +427,7 @@
                   userId: 'Piyali',
                   likes: data.Piyali.publishedProfile.likes || 0,
                   totalLikes: data.Piyali.totalLikes || 0,
-                  parsedTimestamp: parseTimestamp(data.Piyali.publishedProfile.timestamp),
+                  parsedTimestamp: new Date(data.Piyali.publishedProfile.timestamp),
                   likeAnimation: false,
                   countAnimation: false
                 });
@@ -425,7 +437,7 @@
               allPosts.sort((a, b) => b.parsedTimestamp - a.parsedTimestamp);
               setPosts(allPosts);
             } else {
-              console.log('📝 No data in Firebase');
+              console.log('🔍 No data in Firebase');
             }
           } catch (error) {
             console.error('❌ Firebase load error:', error);
@@ -453,7 +465,7 @@
                   userId: 'Bikram',
                   likes: data.Bikram.publishedProfile.likes || 0,
                   totalLikes: data.Bikram.totalLikes || 0,
-                  parsedTimestamp: parseTimestamp(data.Bikram.publishedProfile.timestamp),
+                  parsedTimestamp: new Date(data.Bikram.publishedProfile.timestamp),
                   likeAnimation: false,
                   countAnimation: false
                 });
@@ -465,7 +477,7 @@
                   userId: 'Piyali',
                   likes: data.Piyali.publishedProfile.likes || 0,
                   totalLikes: data.Piyali.totalLikes || 0,
-                  parsedTimestamp: parseTimestamp(data.Piyali.publishedProfile.timestamp),
+                  parsedTimestamp: new Date(data.Piyali.publishedProfile.timestamp),
                   likeAnimation: false,
                   countAnimation: false
                 });
@@ -571,7 +583,7 @@
                 userId: 'Bikram',
                 likes: data.Bikram.publishedProfile.likes || 0,
                 totalLikes: data.Bikram.totalLikes || 0,
-                parsedTimestamp: parseTimestamp(data.Bikram.publishedProfile.timestamp),
+                parsedTimestamp: new Date(data.Bikram.publishedProfile.timestamp),
                 likeAnimation: false,
                 countAnimation: false
               });
@@ -583,7 +595,7 @@
                 userId: 'Piyali',
                 likes: data.Piyali.publishedProfile.likes || 0,
                 totalLikes: data.Piyali.totalLikes || 0,
-                parsedTimestamp: parseTimestamp(data.Piyali.publishedProfile.timestamp),
+                parsedTimestamp: new Date(data.Piyali.publishedProfile.timestamp),
                 likeAnimation: false,
                 countAnimation: false
               });
@@ -604,29 +616,6 @@
       const getTotalLikesForUser = (userId) => {
         if (!userData[userId]) return 0;
         return userData[userId].totalLikes || 0;
-      };
-
-      // Format timestamp as date only
-      const formatTimestamp = (timestamp) => {
-        if (!timestamp) return 'Date not available';
-        
-        try {
-          const parsedDate = parseTimestamp(timestamp);
-          
-          if (isNaN(parsedDate.getTime())) {
-            return 'Date not available';
-          }
-          
-          // Return full date format (e.g., "Dec 15, 2023")
-          return `Published: ${parsedDate.toLocaleDateString('en-US', { 
-            year: 'numeric',
-            month: 'short', 
-            day: 'numeric'
-          })}`;
-        } catch (e) {
-          console.log('Date formatting error:', e);
-          return 'Date not available';
-        }
       };
 
       if (loading) {
