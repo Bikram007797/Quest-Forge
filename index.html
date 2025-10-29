@@ -464,7 +464,7 @@
       totalXP: userData[user].totalXP,
       equippedCount: userData[user].equippedItems.length,
       totalPurchased: totalPurchased,
-      timestamp: new Date().toLocaleDateString()
+      timestamp: new Date().toISOString()
     };
     setUserData(newUserData);
     alert('✅ Profile Published Successfully! 🎉');
