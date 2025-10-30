@@ -15,7 +15,7 @@
         height: 100%;
         margin: 0;
         padding: 0;
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        background: linear-gradient(135deg, #000000, #000000, #000000);
         background-attachment: fixed;
     }
     
@@ -36,7 +36,7 @@
     }
 
     .post-card {
-        background: rgba(255, 255, 255, 0.05);
+        background: linear-gradient(135deg, #000000, #1f1f1f, #4d4d4d);
         backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.1);
         border-radius: 24px;
@@ -109,7 +109,7 @@
         position: relative;
         width: 100%;
         aspect-ratio: 16 / 9;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        background: linear-gradient(135deg, #1e1e2f, #3f2b96, #6a11cb);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -142,7 +142,7 @@
     }
 
     .post-image img:hover {
-        transform: scale(1.05) rotate(2deg);
+        transform: scale(1.05) rotate(360deg);
     }
     
     .post-stats {
@@ -329,7 +329,7 @@
     }
 
     .animate-like {
-        animation: likeAnimation 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        animation: likeAnimation 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     }
 
     @keyframes likeAnimation {
@@ -447,7 +447,7 @@
     }
     
     .refresh-btn:active {
-        transform: scale(0.95) rotate(90deg);
+        transform: scale(0.95) rotate(360deg);
     }
     
     .empty-state {
@@ -507,7 +507,33 @@
     @keyframes spin {
         to { transform: rotate(360deg); }
     }
+@keyframes sideSlide {
+	60% {
+		transform: translate(20px, 0) scale(1);
+		color: #b10e81;
+	}
 
+	80% {
+		transform: translate(20px, 0) scale(1);
+		color: #b10e81;
+	}
+
+	99% {
+		transform: translate(0) scale(1.2);
+		color: #00f0ff;
+	}
+
+	100% {
+		transform: translate(0) scale(1);
+		opacity: 1;
+		color: #b10e81;
+	}
+}
+
+.header-title {
+  animation: sideSlide 3s ease-in-out infinite;
+  display: inline-block;
+}
     .header {
         background: rgba(15, 12, 41, 0.8);
         backdrop-filter: blur(20px);
