@@ -668,31 +668,66 @@
       };
 
       const formatTimestamp = (timestamp) => {
-        if (!timestamp) return 'Date not available';
+        if (!timestamp) return 'Just now';
         
         try {
-          const date = new Date(timestamp);
+          // Handle different timestamp formats
+          let date;
           
-          if (isNaN(date.getTime())) {
-            return 'Date not available';
+          if (typeof timestamp === 'string') {
+            // Try to parse as ISO string first
+            date = new Date(timestamp);
+            
+            // If that fails, try to parse as locale string
+            if (isNaN(date.getTime())) {
+              date = new Date(timestamp.replace('Published: ', ''));
+            }
+          } else if (timestamp.toDate) {
+            // Handle Firebase Timestamp objects
+            date = timestamp.toDate();
+          } else if (timestamp.seconds) {
+            // Handle Firebase Timestamp with seconds
+            date = new Date(timestamp.seconds * 1000);
+          } else {
+            date = new Date(timestamp);
           }
           
-          const dateStr = date.toLocaleDateString('en-US', { 
-            year: 'numeric',
-            month: 'short', 
-            day: 'numeric'
-          });
+          if (isNaN(date.getTime())) {
+            console.log('Invalid timestamp:', timestamp);
+            return 'Recently';
+          }
           
-          const timeStr = date.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-          });
+          const now = new Date();
+          const diffInSeconds = Math.floor((now - date) / 1000);
           
-          return `Published: ${dateStr} at ${timeStr}`;
+          // Show relative time for recent posts
+          if (diffInSeconds < 60) {
+            return 'Just now';
+          } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes}m ago`;
+          } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours}h ago`;
+          } else {
+            // For older posts, show full date
+            const dateStr = date.toLocaleDateString('en-US', { 
+              year: 'numeric',
+              month: 'short', 
+              day: 'numeric'
+            });
+            
+            const timeStr = date.toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true
+            });
+            
+            return `${dateStr} at ${timeStr}`;
+          }
         } catch (e) {
-          console.log('Date formatting error:', e);
-          return 'Date not available';
+          console.log('Date formatting error:', e, 'Timestamp:', timestamp);
+          return 'Recently';
         }
       };
 
@@ -708,32 +743,46 @@
               setUserData(data);
               
               const allPosts = [];
+              
+              // Process Bikram's profile
               if (data.Bikram && data.Bikram.publishedProfile) {
+                const profile = data.Bikram.publishedProfile;
+                console.log('Bikram timestamp:', profile.timestamp);
+                
                 allPosts.push({
-                  ...data.Bikram.publishedProfile,
+                  ...profile,
                   id: 'bikram',
                   userId: 'Bikram',
-                  likes: data.Bikram.publishedProfile.likes || 0,
+                  likes: profile.likes || 0,
                   totalLikes: data.Bikram.totalLikes || 0,
-                  parsedTimestamp: new Date(data.Bikram.publishedProfile.timestamp),
-                  likeAnimation: false,
-                  countAnimation: false
-                });
-              }
-              if (data.Piyali && data.Piyali.publishedProfile) {
-                allPosts.push({
-                  ...data.Piyali.publishedProfile,
-                  id: 'piyali', 
-                  userId: 'Piyali',
-                  likes: data.Piyali.publishedProfile.likes || 0,
-                  totalLikes: data.Piyali.totalLikes || 0,
-                  parsedTimestamp: new Date(data.Piyali.publishedProfile.timestamp),
                   likeAnimation: false,
                   countAnimation: false
                 });
               }
               
-              allPosts.sort((a, b) => b.parsedTimestamp - a.parsedTimestamp);
+              // Process Piyali's profile
+              if (data.Piyali && data.Piyali.publishedProfile) {
+                const profile = data.Piyali.publishedProfile;
+                console.log('Piyali timestamp:', profile.timestamp);
+                
+                allPosts.push({
+                  ...profile,
+                  id: 'piyali', 
+                  userId: 'Piyali',
+                  likes: profile.likes || 0,
+                  totalLikes: data.Piyali.totalLikes || 0,
+                  likeAnimation: false,
+                  countAnimation: false
+                });
+              }
+              
+              // Sort by timestamp - handle various timestamp formats
+              allPosts.sort((a, b) => {
+                const timeA = new Date(a.timestamp).getTime();
+                const timeB = new Date(b.timestamp).getTime();
+                return timeB - timeA; // Newest first
+              });
+              
               setPosts(allPosts);
             } else {
               console.log('🔍 No data in Firebase');
@@ -747,6 +796,7 @@
 
         loadDataFromFirebase();
         
+        // Real-time listener
         const unsubscribe = db.collection('questforge').doc('userData')
           .onSnapshot((doc) => {
             if (doc.exists) {
@@ -755,32 +805,40 @@
               setUserData(data);
               
               const allPosts = [];
+              
               if (data.Bikram && data.Bikram.publishedProfile) {
+                const profile = data.Bikram.publishedProfile;
                 allPosts.push({
-                  ...data.Bikram.publishedProfile,
+                  ...profile,
                   id: 'bikram',
                   userId: 'Bikram',
-                  likes: data.Bikram.publishedProfile.likes || 0,
+                  likes: profile.likes || 0,
                   totalLikes: data.Bikram.totalLikes || 0,
-                  parsedTimestamp: new Date(data.Bikram.publishedProfile.timestamp),
-                  likeAnimation: false,
-                  countAnimation: false
-                });
-              }
-              if (data.Piyali && data.Piyali.publishedProfile) {
-                allPosts.push({
-                  ...data.Piyali.publishedProfile,
-                  id: 'piyali',
-                  userId: 'Piyali',
-                  likes: data.Piyali.publishedProfile.likes || 0,
-                  totalLikes: data.Piyali.totalLikes || 0,
-                  parsedTimestamp: new Date(data.Piyali.publishedProfile.timestamp),
                   likeAnimation: false,
                   countAnimation: false
                 });
               }
               
-              allPosts.sort((a, b) => b.parsedTimestamp - a.parsedTimestamp);
+              if (data.Piyali && data.Piyali.publishedProfile) {
+                const profile = data.Piyali.publishedProfile;
+                allPosts.push({
+                  ...profile,
+                  id: 'piyali',
+                  userId: 'Piyali',
+                  likes: profile.likes || 0,
+                  totalLikes: data.Piyali.totalLikes || 0,
+                  likeAnimation: false,
+                  countAnimation: false
+                });
+              }
+              
+              // Sort by timestamp
+              allPosts.sort((a, b) => {
+                const timeA = new Date(a.timestamp).getTime();
+                const timeB = new Date(b.timestamp).getTime();
+                return timeB - timeA;
+              });
+              
               setPosts(allPosts);
             }
           }, (error) => {
@@ -861,32 +919,40 @@
             setUserData(data);
             
             const allPosts = [];
+            
             if (data.Bikram && data.Bikram.publishedProfile) {
+              const profile = data.Bikram.publishedProfile;
               allPosts.push({
-                ...data.Bikram.publishedProfile,
+                ...profile,
                 id: 'bikram',
                 userId: 'Bikram',
-                likes: data.Bikram.publishedProfile.likes || 0,
+                likes: profile.likes || 0,
                 totalLikes: data.Bikram.totalLikes || 0,
-                parsedTimestamp: new Date(data.Bikram.publishedProfile.timestamp),
-                likeAnimation: false,
-                countAnimation: false
-              });
-            }
-            if (data.Piyali && data.Piyali.publishedProfile) {
-              allPosts.push({
-                ...data.Piyali.publishedProfile,
-                id: 'piyali',
-                userId: 'Piyali',
-                likes: data.Piyali.publishedProfile.likes || 0,
-                totalLikes: data.Piyali.totalLikes || 0,
-                parsedTimestamp: new Date(data.Piyali.publishedProfile.timestamp),
                 likeAnimation: false,
                 countAnimation: false
               });
             }
             
-            allPosts.sort((a, b) => b.parsedTimestamp - a.parsedTimestamp);
+            if (data.Piyali && data.Piyali.publishedProfile) {
+              const profile = data.Piyali.publishedProfile;
+              allPosts.push({
+                ...profile,
+                id: 'piyali',
+                userId: 'Piyali',
+                likes: profile.likes || 0,
+                totalLikes: data.Piyali.totalLikes || 0,
+                likeAnimation: false,
+                countAnimation: false
+              });
+            }
+            
+            // Sort by timestamp
+            allPosts.sort((a, b) => {
+              const timeA = new Date(a.timestamp).getTime();
+              const timeB = new Date(b.timestamp).getTime();
+              return timeB - timeA;
+            });
+            
             setPosts(allPosts);
           }
         } catch (error) {
@@ -895,6 +961,7 @@
           setTimeout(() => setRefreshing(false), 1000);
         }
       };
+
       const getTotalLikesForUser = (userId) => {
         if (!userData[userId]) return 0;
         return userData[userId].totalLikes || 0;
