@@ -12,49 +12,84 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <meta name="mobile-web-app-capable" content="yes">
   <style>
-    /* Ensure the app takes full height on mobile */
     html, body, #root {
-        height: 100%;
-        margin: 0;
-        padding: 0;
+      height: 100%;
+      margin: 0;
+      padding: 0;
       background-attachment: fixed;
     }
     
-    /* Mobile-First Responsive Design */
     * {
-        touch-action: manipulation;
-        -webkit-user-select: none;
-        user-select: none;
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
     }
     
     button, input, textarea {
-        -webkit-user-select: text;
-        user-select: text;
-        min-height: 44px;
-        min-width: 44px;
+      -webkit-user-select: text;
+      user-select: text;
+      min-height: 44px;
+      min-width: 44px;
     }
 
     body {
-        overflow-x: hidden;
+      overflow-x: hidden;
     }
 
     button {
-        -webkit-tap-highlight-color: transparent;
-        padding: 12px 16px;
+      -webkit-tap-highlight-color: transparent;
+      padding: 12px 16px;
     }
 
     input, textarea {
-        font-size: 16px;
-        padding: 12px;
+      font-size: 16px;
+      padding: 12px;
     }
 
     html {
-        scroll-behavior: smooth;
+      scroll-behavior: smooth;
     }
     
     * {
-        -webkit-overflow-scrolling: touch;
+      -webkit-overflow-scrolling: touch;
     }
+
+    @keyframes pulse-glow { 
+      0%, 100% { text-shadow: 0 0 20px rgba(168, 85, 247, 0.5); } 
+      50% { text-shadow: 0 0 40px rgba(168, 85, 247, 1); } 
+    }
+    
+    .pulse-title { animation: pulse-glow 2s ease-in-out infinite; }
+    
+    .profile-card {
+      width: 100%;
+      max-width: 320px;
+      background-color: #ffd700;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      background: linear-gradient(135deg, #a88a00 0%, #ffeb95 20%, #ffd700 40%, #ffeb95 60%, #a88a00 100%);
+      border: 3px solid #ffeb95;
+      transition: transform 0.8s ease-in-out;
+      transform-style: preserve-3d;
+      cursor: pointer;
+    }
+    
+    .profile-card.rotate {
+      transform: rotateY(360deg);
+    }
+    
+    .card-image { padding: 10px 10px 5px 10px; background-color: #000; }
+    .card-image img { width: 100%; height: auto; display: block; border-radius: 5px; }
+    .card-body { padding: 10px; color: #000; }
+    .character-name { text-align: center; margin: 0 0 5px 0; font-size: 1.6em; padding: 5px 0; background-color: rgba(0, 0, 0, 0.1); color: #000; text-shadow: 1px 1px 1px #fff; border-radius: 3px; font-weight: bold; }
+    .character-username { text-align: center; margin: 0 0 10px 0; font-size: 0.85em; color: #333; font-weight: normal; }
+    .properties { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .property-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background-color: rgba(255, 255, 255, 0.2); border-radius: 3px; font-size: 0.95em; font-weight: 500; }
+    .property-label { font-weight: normal; text-align: left; }
+    .property-value { font-weight: bold; text-align: right; }
+    .star { font-size: 1.3em; }
+    .timestamp { text-align: center; margin-top: 15px; font-size: 0.7em; color: #333; font-weight: normal; }
   </style>
 </head>
 <body>
@@ -77,1240 +112,1197 @@
     // ===== END FIREBASE INITIALIZATION =====
 
     const QuestForge = () => {
-            const [appState, setAppState] = React.useState('login');
-            const [selectedUser, setSelectedUser] = React.useState(null);
-            const [filterCategory, setFilterCategory] = React.useState('All Items');
-            const [viewingProfile, setViewingProfile] = React.useState(null);
-            const [showStore, setShowStore] = React.useState(false);
-            const [touchStart, setTouchStart] = React.useState(null);
-  const [touchEnd, setTouchEnd] = React.useState(null);
-  const [showDescModal, setShowDescModal] = React.useState(null);
+      const [appState, setAppState] = React.useState('login');
+      const [selectedUser, setSelectedUser] = React.useState(null);
+      const [filterCategory, setFilterCategory] = React.useState('All Items');
+      const [viewingProfile, setViewingProfile] = React.useState(null);
+      const [touchStart, setTouchStart] = React.useState(null);
+      const [touchEnd, setTouchEnd] = React.useState(null);
+      const [showDescModal, setShowDescModal] = React.useState(null);
+      const [newXPInput, setNewXPInput] = React.useState('');
+      const [firebaseError, setFirebaseError] = React.useState(null);
+      const [saving, setSaving] = React.useState(false);
 
-  const handleTouchStart = (e) => {
-  setTouchStart(e.targetTouches[0].clientX);
-  };
+      // Initialize userData with default values
+      const getInitialUserData = () => {
+        return {
+          Bikram: {
+            totalXP: 500,
+            spentXP: 0,
+            inventory: [],
+            equippedItems: [],
+            avatarId: 0,
+            avatarName: 'Shadow Knight',
+            publishedProfile: null,
+            purchaseHistory: []
+          },
+          Piyali: {
+            totalXP: 750,
+            spentXP: 0,
+            inventory: [],
+            equippedItems: [],
+            avatarId: 2,
+            avatarName: 'Crystal Sage',
+            publishedProfile: null,
+            purchaseHistory: []
+          }
+        };
+      };
 
-  const handleTouchEnd = (e) => {
-  setTouchEnd(e.changedTouches[0].clientX);
-  handleSwipe(touchStart, e.changedTouches[0].clientX);
-  };
+      const [userData, setUserData] = React.useState(getInitialUserData());
+      const [currentUser, setCurrentUser] = React.useState(null);
+      const [loading, setLoading] = React.useState(true);
 
-  const handleSwipe = (start, end) => {
-  if (!start || !end) return;
-  const distance = start - end;
-  const isLeftSwipe = distance > 50;
-  const isRightSwipe = distance < -50;
+      // Touch handlers for mobile swipe
+      const handleTouchStart = (e) => {
+        setTouchStart(e.targetTouches[0].clientX);
+      };
 
-  if (isRightSwipe && appState !== 'login') {
-    if (appState === 'dashboard') handleLogout();
-    else if (appState === 'profile' || appState === 'store' || appState === 'fame') {
-      setAppState('dashboard');
-    }
-  }
-  };
+      const handleTouchEnd = (e) => {
+        setTouchEnd(e.changedTouches[0].clientX);
+        handleSwipe(touchStart, e.changedTouches[0].clientX);
+      };
 
-  // Initialize userData from localStorage or use default values
-  const getInitialUserData = () => {
-    // Return default data - Firebase will load real data
-    return {
-      Bikram: {
-        totalXP: 500,
-        spentXP: 0,
-        inventory: [],
-        equippedItems: [],
-        avatarId: 0,
-        avatarName: 'Shadow Knight',
-        publishedProfile: null,
-        purchaseHistory: []
-      },
-      Piyali: {
-        totalXP: 750,
-        spentXP: 0,
-        inventory: [],
-        equippedItems: [],
-        avatarId: 2,
-        avatarName: 'Crystal Sage',
-        publishedProfile: null,
-        purchaseHistory: []
-      }
-    };
-  };
+      const handleSwipe = (start, end) => {
+        if (!start || !end) return;
+        const distance = start - end;
+        const isRightSwipe = distance < -50;
 
-  const [userData, setUserData] = React.useState(getInitialUserData());
-  const [currentUser, setCurrentUser] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
+        if (isRightSwipe && appState !== 'login') {
+          if (appState === 'dashboard') handleLogout();
+          else if (['profile', 'store', 'fame'].includes(appState)) {
+            setAppState('dashboard');
+          }
+        }
+      };
 
-  // ===== LOAD DATA FROM FIREBASE =====
-  React.useEffect(() => {
-  const loadDataFromFirebase = async () => {
-    try {
-      const docRef = db.collection('questforge').doc('userData');
-      const doc = await docRef.get();
-      
-      if (doc.exists) {
-        console.log('✅ Data loaded from Firebase');
-        setUserData(doc.data());
-      } else {
-        console.log('📝 No data in Firebase, using defaults');
-        // Save default data to Firebase
-        await docRef.set(getInitialUserData());
-      }
-    } catch (error) {
-      console.error('❌ Firebase load error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadDataFromFirebase();
-  }, []);
-  // ===== END LOAD FROM FIREBASE =====
-
-  React.useEffect(() => {
-    if (userData && !loading) {
-      // Save to Firebase
-      const saveToFirebase = async () => {
+      // ===== FIREBASE OPERATIONS =====
+      const loadDataFromFirebase = async () => {
         try {
-          await db.collection('questforge').doc('userData').set(userData);
+          setFirebaseError(null);
+          const docRef = db.collection('questforge').doc('userData');
+          const doc = await docRef.get();
+          
+          if (doc.exists) {
+            console.log('✅ Data loaded from Firebase');
+            setUserData(doc.data());
+          } else {
+            console.log('📝 No data in Firebase, using defaults');
+            await docRef.set(getInitialUserData());
+          }
+        } catch (error) {
+          console.error('❌ Firebase load error:', error);
+          setFirebaseError('Failed to load data. Using local data.');
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const saveToFirebase = async (data) => {
+        try {
+          setSaving(true);
+          setFirebaseError(null);
+          await db.collection('questforge').doc('userData').set(data);
           console.log('✅ Data saved to Firebase');
         } catch (error) {
           console.error('❌ Firebase save error:', error);
+          setFirebaseError('Failed to save data. Changes may not persist.');
+        } finally {
+          setSaving(false);
         }
       };
-      saveToFirebase();
-    }
-  }, [userData, loading]);
 
-  const avatarUrls = [
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Sarah',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Mason',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Aidan',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Destiny',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Vivian',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=George',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Kingston',
-    'https://api.dicebear.com/9.x/notionists/svg?seed=Emery',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Vivian',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Christian',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Leah',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Destiny',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sophia',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Kimberly',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Sadie',
-    'https://api.dicebear.com/9.x/lorelei/svg?seed=Andrea',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Avery',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Emery',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Brooklynn',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Oliver',
-    'https://api.dicebear.com/9.x/adventurer/svg?seed=Mason',
-    'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_22.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_21.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_20.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_13.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_12.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_11.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_7.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_6.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_5.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_4.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_14.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_12.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_11.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_6.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_5.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_10.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_9.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_8.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_3.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_4.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_2.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_21.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_24.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_6.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_1.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_1.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_2.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_3.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_4.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_5.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_6.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_7.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_8.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_12.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_13.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_14.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_16.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_17.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_18.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_19.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_20.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_23.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_24.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_25.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_29.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_31.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_32.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_34.png',
-  'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_35.png'
-  ];
+      React.useEffect(() => {
+        loadDataFromFirebase();
+      }, []);
 
-  const levelRanges = [
-    { level: 1, min: 0, max: 100, name: 'Novice Explorer' },
-    { level: 2, min: 101, max: 250, name: 'Apprentice Scholar' },
-    { level: 3, min: 251, max: 450, name: 'Learner Adept' },
-    { level: 4, min: 451, max: 700, name: 'Knowledge Seeker' },
-    { level: 5, min: 701, max: 1000, name: 'Mind Master' },
-    { level: 6, min: 1001, max: 1350, name: 'Wisdom Keeper' },
-    { level: 7, min: 1351, max: 1750, name: 'Sage Tier' },
-    { level: 8, min: 1751, max: 2200, name: 'Scholar Elite' },
-    { level: 9, min: 2201, max: 2700, name: 'Knowledge King' },
-    { level: 10, min: 2701, max: 3250, name: 'Intellect Ascended' },
-    { level: 11, min: 3251, max: 3850, name: 'Legendary Thinker' },
-    { level: 12, min: 3851, max: 4500, name: 'Mythic Scholar' },
-    { level: 13, min: 4501, max: 5000, name: 'Ultimate Sage' }
-  ];
-  const itemGifs = {
-  1: 'assets/weapons/blade-of-clarity.gif',
-  2: 'assets/weapons/executioners-axe.gif',
-  3: 'assets/weapons/siege-catapult.gif',
-4: 'assets/weapons/thunder-sword.gif',
-5: 'assets/weapons/mace-of-massacre.gif',
-6: 'assets/weapons/bow-of-insight.gif',
-  7: 'assets/armor/royal-guardian-shield.gif',
-  8: 'assets/armor/viking-round-shield.gif',
-  9: 'assets/armor/knights-helm.gif',
-  10: 'assets/armor/titans-breastplate.gif',
-  11: 'assets/armor/dragons-wrath.gif',
-  12: 'assets/skills/oracles-foresight.gif',
-  13: 'assets/skills/treasure-map.gif',
-  14: 'assets/skills/ring-of-commitment.gif',
-  15: 'assets/skills/snipers-precision.gif',
-  16: 'assets/skills/energy-core-surge.gif',
-  17: 'assets/skills/mind-palace.gif',
-  18: 'assets/potions/elixir-of-clarity.gif',
-  19: 'assets/potions/alchemists-formula.gif',
-  20: 'assets/potions/phoenix-tears.gif',
-  21: 'assets/potions/owls-wisdom.gif',
-  22: 'assets/potions/certificate-of-mastery.gif',
- 23: 'assets/potions/torch-of-inspiration.gif'
- };
-
-  const rewards = [
-  // WEAPONS
-  { id: 1, name: 'Blade of Clarity', hp: 0.625, price: 10, category: 'Weapons', desc: 'A shimmering sword that cuts through confusion and brain fog. Increases focus precision by 40% during study sessions.' },
-  { id: 2, name: 'Executioner\'s Axe', hp: 0.875, price: 20, category: 'Weapons', desc: 'A devastating double-bladed weapon that obliterates procrastination. Perfect for chopping down massive task lists with brutal efficiency.' },
-  { id: 3, name: 'Siege Catapult', hp: 0.75, price: 15, category: 'Weapons', desc: 'An ancient war machine that launches your productivity skyward. Tackles multiple assignments simultaneously with explosive power.' },
-  { id: 4, name: 'Thunder Sword', hp: 0.625, price: 10, category: 'Weapons', desc: 'Legendary paired swords wielded by ancient scholar-warriors. Strike from two angles simultaneously - master both theory and practice. The left blade cuts through confusion while the right blade carves paths to understanding. Perfect for conquering complex subjects that require dual perspectives.' },
-  { id: 5, name: 'Mace of Massacre', hp: 0.875, price: 20, category: 'Weapons', desc: 'A brutal instrument forged from pure determination. When problems seem unbreakable, this mighty hammer smashes through mental barriers with relentless force. Each crushing blow turns obstacles into stepping stones. Favored by warriors who refuse to quit until every challenge is pulverized into dust.' },
-  { id: 6, name: 'Bow of Insight', hp: 0.75, price: 15, category: 'Weapons', desc: 'An elegant weapon for the strategic learner. Draw back the string of concentration and release arrows of focused effort that never miss their mark. Each shot pierces through distractions and hits the bullseye of comprehension. Ideal for targeting specific learning objectives with deadly accuracy.' },
-  
-  // ARMOR
-  { id: 7, name: 'Royal Guardian Shield', hp: 0.875, price: 20, category: 'Armor', desc: 'A noble fleur-de-lis emblazoned shield that deflects distractions and negative thoughts. Worn by legendary scholars throughout history.' },
-  { id: 8, name: 'Viking Round Shield', hp: 0.625, price: 12, category: 'Armor', desc: 'Forged from determination and discipline. Blocks social media notifications and unwanted interruptions with Viking resilience.' },
-  { id: 9, name: 'Knight\'s Helm of Focus', hp: 0.75, price: 15, category: 'Armor', desc: 'A crystal-crested helmet that shields your mind from chaos. Protects against mental fatigue and maintains concentration.' },
-  { id: 10, name: 'Titan\'s Breastplate', hp: 1.125, price: 35, category: 'Armor', desc: 'Legendary armor that fortifies your willpower. Grants immunity to burnout and doubles your study endurance.' },
-   { id: 11, name: 'Dragon\'s Wrath', hp: 1.25, price: 45, category: 'Armor', desc: 'Summon the fierce power of an ancient dragon. Obliterates procrastination and conquers entire study modules in one session.' },
-  
-  // SKILLS
-  { id: 12, name: 'Oracle\'s Foresight', hp: 0.625, price: 10, category: 'Skills', desc: 'Peer into the crystal ball to predict exam questions and plan your study path. Reveals hidden patterns in complex subjects.' },
-  { id: 13, name: 'Treasure Map of Knowledge', hp: 0.75, price: 15, category: 'Skills', desc: 'Unlock secret strategies and discover the fastest routes to mastery. Navigate through difficult topics with ease.' },
-  { id: 14, name: 'Ring of Commitment', hp: 0.875, price: 20, category: 'Skills', desc: 'A golden oath ring that binds you to your goals. Once activated, grants unbreakable determination for 2 hours.' },
-  
-  { id: 15, name: 'Sniper\'s Precision', hp: 1, price: 30, category: 'Skills', desc: 'Lock onto your target with laser focus. Eliminates mistakes and achieves 100% accuracy on practice problems.' },
-  { id: 16, name: 'Energy Core Surge', hp: 0.875, price: 20, category: 'Skills', desc: 'Unleash a burst of electric concentration. Powers through the toughest assignments with lightning speed.' },
-  { id: 17, name: 'Mind Palace Meditation', hp: 1, price: 30, category: 'Skills', desc: 'Activate your brain\'s full potential. Enhances memory retention by 200% and unlocks deep understanding.' },
- 
-  
-  // POTIONS
-  { id: 18, name: 'Elixir of Clarity', hp: 0.5, price: 8, category: 'Consumables', desc: 'A pure water droplet from the Fountain of Wisdom. Instantly clears mental fog and refreshes your thinking.' },
-  { id: 19, name: 'Alchemist\'s Formula', hp: 0.75, price: 15, category: 'Consumables', desc: 'A mysterious molecular compound that rewires your brain for optimal learning. Boosts comprehension by 50% for 3 hours.' },
-  { id: 20, name: 'Phoenix Tears Potion', hp: 0.875, price: 20, category: 'Consumables', desc: 'A legendary orange and gold elixir that revives motivation from the ashes. Grants complete mental regeneration.' },
-  { id: 21, name: 'Owl\'s Wisdom Brew', hp: 1, price: 30, category: 'Consumables', desc: 'Brewed by the scholarly owl guardian. Grants photographic memory and the ability to absorb information at incredible speeds.' },
-  { id: 22, name: 'Certificate of Mastery', hp: 0.625, price: 10, category: 'Consumables', desc: 'Not a potion but a power-up! Unlocks bonus XP and special abilities when you complete major milestones. The ultimate reward.' },
-  { id: 23, name: 'Torch of Inspiration', hp: 0.75, price: 15, category: 'Consumables', desc: 'Ignite your inner fire and illuminate the darkest study sessions. Burns away doubt and lights the path to success.' }
-];
-
-  const [newXPInput, setNewXPInput] = React.useState('');
-
-
-
-  const handleLogin = () => {
-    if (!selectedUser) {
-      alert('Please select a user');
-      return;
-    }
-
-    // If new XP is provided, validate and update
-    if (newXPInput.trim()) {
-      const xpValue = parseFloat(newXPInput);
-      if (isNaN(xpValue) || xpValue < 0) {
-        alert('Please enter a valid positive number for XP');
-        return;
-      }
-      
-      // Update user data with new XP
-      const newUserData = {
-  ...userData,
-  [selectedUser]: {
-    ...userData[selectedUser],
-    totalXP: xpValue
-  }
-  };
-  setUserData(newUserData);
-  // Firebase auto-saves via useEffect - no manual save needed!
-    }
-    
-    setCurrentUser(selectedUser);
-    setAppState('dashboard');
-  };
-
-  const handleLogout = () => {
-    setAppState('login');
-    setCurrentUser(null);
-    setSelectedUser(null);
-    setViewingProfile(null);
-  };
-
-  const getUserLevel = (xp) => {
-    return levelRanges.find(l => xp >= l.min && xp <= l.max) || levelRanges[12];
-  };
-
-  const getXpProgress = (xp) => {
-    const level = getUserLevel(xp);
-    const levelXpRange = level.max - level.min;
-    const currentLevelXp = xp - level.min;
-    return (currentLevelXp / levelXpRange) * 100;
-  };
-
-  const getTotalPower = (user) => {
-  const inventory = userData[user].inventory;
-  const equipped = userData[user].equippedItems;
-
-  const power = equipped.reduce((sum, itemId) => {
-    const item = rewards.find(r => r.id === itemId);
-    const inventoryItem = inventory.find(inv => inv.itemId === itemId);
-    const quantity = inventoryItem ? inventoryItem.quantity : 1;
-    return sum + (item ? item.hp * quantity : 0);
-  }, 0);
-
-  return Math.min(power, 100);
-  };
-
-  const getRank = (power) => {
-    const ranks = [
-      { name: 'RECRUIT', stars: 1 },
-      { name: 'PRIVATE', stars: 2 },
-      { name: 'CORPORAL', stars: 3 },
-      { name: 'SERGEANT', stars: 4 },
-      { name: 'STAFF SERGEANT', stars: 5 },
-      { name: 'LIEUTENANT', stars: 6 },
-      { name: 'CAPTAIN', stars: 7 },
-      { name: 'MAJOR', stars: 8 },
-      { name: 'COLONEL', stars: 9 },
-      { name: 'GENERAL', stars: 10 }
-    ];
-    const rankIndex = Math.floor(power / 10);
-    return ranks[Math.min(rankIndex, 9)];
-  };
-
-  const handleBuyItem = (item) => {
-    const user = currentUser;
-    const remaining = userData[user].totalXP - userData[user].spentXP;
-    
-    if (remaining < item.price) {
-      alert(`Not enough XP! Need ${item.price} but have ${remaining}`);
-      return;
-    }
-
-    const newUserData = JSON.parse(JSON.stringify(userData));
-    const inventory = newUserData[user].inventory;
-    const existingItem = inventory.find(i => i.itemId === item.id);
-    
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      inventory.push({ itemId: item.id, quantity: 1 });
-    }
-
-    newUserData[user].spentXP += item.price;
-    
-    const history = newUserData[user].purchaseHistory;
-    const historyItem = history.find(h => h.itemId === item.id);
-    if (historyItem) {
-      historyItem.count += 1;
-    } else {
-      history.push({ itemId: item.id, count: 1 });
-    }
-
-    setUserData(newUserData);
-  };
-
-  const handleEquipItem = (itemId) => {
-    const user = currentUser;
-    const newUserData = JSON.parse(JSON.stringify(userData));
-    const equipped = newUserData[user].equippedItems;
-    
-    if (equipped.includes(itemId)) {
-      newUserData[user].equippedItems = equipped.filter(id => id !== itemId);
-    } else {
-      newUserData[user].equippedItems = [...equipped, itemId];
-    }
-    
-    setUserData(newUserData);
-  };
-
-  const handleSellItem = (itemId) => {
-    const user = currentUser;
-    const item = rewards.find(r => r.id === itemId);
-    const newUserData = JSON.parse(JSON.stringify(userData));
-    
-    const inventoryItem = newUserData[user].inventory.find(i => i.itemId === itemId);
-    if (inventoryItem) {
-      inventoryItem.quantity -= 1;
-      if (inventoryItem.quantity === 0) {
-        newUserData[user].inventory = newUserData[user].inventory.filter(i => i.itemId !== itemId);
-      }
-    }
-
-    newUserData[user].spentXP -= item.price;
-    newUserData[user].equippedItems = newUserData[user].equippedItems.filter(id => id !== itemId);
-    
-    setUserData(newUserData);
-  };
-
-  const handlePublishProfile = () => {
-    const user = currentUser;
-    const userLevel = getUserLevel(userData[user].totalXP);
-    const power = getTotalPower(user);
-    const rank = getRank(power);
-
-    // Calculate total purchased items
-    const totalPurchased = userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0);
-
-    const newUserData = JSON.parse(JSON.stringify(userData));
-    newUserData[user].publishedProfile = {
-      avatarUrl: avatarUrls[userData[user].avatarId],
-      avatarName: userData[user].avatarName,
-      user: user,
-      level: userLevel.level,
-      levelName: userLevel.name,
-      rank: rank.name,
-      stars: rank.stars,
-      power: power,
-      totalXP: userData[user].totalXP,
-      equippedCount: userData[user].equippedItems.length,
-      totalPurchased: totalPurchased,
-      timestamp: new Date().toISOString()
-    };
-    setUserData(newUserData);
-    alert('✅ Profile Published Successfully! 🎉');
-  };
-  const getFilteredItems = () => {
-    const user = currentUser;
-    let items = [];
-
-    switch (filterCategory) {
-      case 'All Items':
-        // Show all available items from the rewards list
-        items = rewards.map(item => {
-          const inventoryItem = userData[user].inventory.find(inv => inv.itemId === item.id);
-          return {
-            ...item,
-            quantity: inventoryItem ? inventoryItem.quantity : 0,
-            isInInventory: !!inventoryItem,
-            isEquipped: userData[user].equippedItems.includes(item.id)
-          };
-        });
-        break;
-
-      case 'Purchased':
-        // Show only items in inventory that aren't equipped
-        items = userData[user].inventory
-          .filter(inv => !userData[user].equippedItems.includes(inv.itemId))
-          .map(inv => {
-            const item = rewards.find(r => r.id === inv.itemId);
-            return {
-              ...item,
-              quantity: inv.quantity,
-              isInInventory: true,
-              isEquipped: false
-            };
-          });
-        break;
-
-      case 'Equipped':
-        // Show only equipped items
-        items = userData[user].equippedItems.map(itemId => {
-          const item = rewards.find(r => r.id === itemId);
-          const inventoryItem = userData[user].inventory.find(inv => inv.itemId === itemId);
-          return {
-            ...item,
-            quantity: inventoryItem ? inventoryItem.quantity : 0,
-            isInInventory: true,
-            isEquipped: true
-          };
-        });
-        break;
-
-      case 'Weapons':
-      case 'Armor':
-      case 'Skills':
-      case 'Consumables':
-        // Show all items of the selected category
-        items = rewards
-          .filter(item => item.category === filterCategory)
-          .map(item => {
-            const inventoryItem = userData[user].inventory.find(inv => inv.itemId === item.id);
-            return {
-              ...item,
-              quantity: inventoryItem ? inventoryItem.quantity : 0,
-              isInInventory: !!inventoryItem,
-              isEquipped: userData[user].equippedItems.includes(item.id)
-            };
-          });
-        break;
-    }
-
-    return items;
-  };
-
-  if (viewingProfile) {
-  const profile = viewingProfile;
-
-  return (
-    <div 
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <style>{`
-        .card {
-          width: 100%;
-          max-width: 320px;
-          background-color: #ffd700;
-          border-radius: 15px;
-          overflow: hidden;
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-          background: linear-gradient(135deg, #a88a00 0%, #ffeb95 20%, #ffd700 40%, #ffeb95 60%, #a88a00 100%);
-          border: 3px solid #ffeb95;
-          transition: transform 0.8s ease-in-out;
-          transform-style: preserve-3d;
-          cursor: pointer;
+      React.useEffect(() => {
+        if (userData && !loading) {
+          saveToFirebase(userData);
         }
-        .card.rotate {
-          transform: rotateY(360deg);
+      }, [userData, loading]);
+
+      // ===== AVATAR & ASSETS =====
+      const avatarUrls = [
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Sarah',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Mason',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Aidan',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Destiny',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Vivian',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=George',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Kingston',
+        'https://api.dicebear.com/9.x/notionists/svg?seed=Emery',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Vivian',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Christian',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Leah',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Destiny',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Sophia',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Kimberly',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Sadie',
+        'https://api.dicebear.com/9.x/lorelei/svg?seed=Andrea',
+        'https://api.dicebear.com/9.x/adventurer/svg?seed=Avery',
+        'https://api.dicebear.com/9.x/adventurer/svg?seed=Emery',
+        'https://api.dicebear.com/9.x/adventurer/svg?seed=Brooklynn',
+        'https://api.dicebear.com/9.x/adventurer/svg?seed=Oliver',
+        'https://api.dicebear.com/9.x/adventurer/svg?seed=Mason',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_22.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_21.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_20.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_13.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_12.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/upstream_11.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_7.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_6.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_5.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/toon_4.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_14.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_12.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_11.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_6.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/notion_5.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_10.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_9.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_8.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_3.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_4.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/bluey_2.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_21.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_24.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_6.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/vibrent_1.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_1.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_2.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_3.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_4.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_5.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_6.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_7.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_8.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_12.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_13.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_14.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_16.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_17.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_18.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_19.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_20.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_23.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_24.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_25.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_29.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_31.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_32.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_34.png',
+        'https://cdn.jsdelivr.net/gh/alohe/avatars/png/memo_35.png'
+      ];
+
+      const levelRanges = [
+        { level: 1, min: 0, max: 100, name: 'Novice Explorer' },
+        { level: 2, min: 101, max: 250, name: 'Apprentice Scholar' },
+        { level: 3, min: 251, max: 450, name: 'Learner Adept' },
+        { level: 4, min: 451, max: 700, name: 'Knowledge Seeker' },
+        { level: 5, min: 701, max: 1000, name: 'Mind Master' },
+        { level: 6, min: 1001, max: 1350, name: 'Wisdom Keeper' },
+        { level: 7, min: 1351, max: 1750, name: 'Sage Tier' },
+        { level: 8, min: 1751, max: 2200, name: 'Scholar Elite' },
+        { level: 9, min: 2201, max: 2700, name: 'Knowledge King' },
+        { level: 10, min: 2701, max: 3250, name: 'Intellect Ascended' },
+        { level: 11, min: 3251, max: 3850, name: 'Legendary Thinker' },
+        { level: 12, min: 3851, max: 4500, name: 'Mythic Scholar' },
+        { level: 13, min: 4501, max: 5000, name: 'Ultimate Sage' }
+      ];
+
+      const itemGifs = {
+        1: 'assets/weapons/blade-of-clarity.gif',
+        2: 'assets/weapons/executioners-axe.gif',
+        3: 'assets/weapons/siege-catapult.gif',
+        4: 'assets/weapons/thunder-sword.gif',
+        5: 'assets/weapons/mace-of-massacre.gif',
+        6: 'assets/weapons/bow-of-insight.gif',
+        7: 'assets/armor/royal-guardian-shield.gif',
+        8: 'assets/armor/viking-round-shield.gif',
+        9: 'assets/armor/knights-helm.gif',
+        10: 'assets/armor/titans-breastplate.gif',
+        11: 'assets/armor/dragons-wrath.gif',
+        12: 'assets/skills/oracles-foresight.gif',
+        13: 'assets/skills/treasure-map.gif',
+        14: 'assets/skills/ring-of-commitment.gif',
+        15: 'assets/skills/snipers-precision.gif',
+        16: 'assets/skills/energy-core-surge.gif',
+        17: 'assets/skills/mind-palace.gif',
+        18: 'assets/potions/elixir-of-clarity.gif',
+        19: 'assets/potions/alchemists-formula.gif',
+        20: 'assets/potions/phoenix-tears.gif',
+        21: 'assets/potions/owls-wisdom.gif',
+        22: 'assets/potions/certificate-of-mastery.gif',
+        23: 'assets/potions/torch-of-inspiration.gif'
+      };
+
+      const rewards = [
+        // WEAPONS
+        { id: 1, name: 'Blade of Clarity', hp: 0.625, price: 10, category: 'Weapons', desc: 'A shimmering sword that cuts through confusion and brain fog. Increases focus precision by 40% during study sessions.' },
+        { id: 2, name: 'Executioner\'s Axe', hp: 0.875, price: 20, category: 'Weapons', desc: 'A devastating double-bladed weapon that obliterates procrastination. Perfect for chopping down massive task lists with brutal efficiency.' },
+        { id: 3, name: 'Siege Catapult', hp: 0.75, price: 15, category: 'Weapons', desc: 'An ancient war machine that launches your productivity skyward. Tackles multiple assignments simultaneously with explosive power.' },
+        { id: 4, name: 'Thunder Sword', hp: 0.625, price: 10, category: 'Weapons', desc: 'Legendary paired swords wielded by ancient scholar-warriors. Strike from two angles simultaneously - master both theory and practice.' },
+        { id: 5, name: 'Mace of Massacre', hp: 0.875, price: 20, category: 'Weapons', desc: 'A brutal instrument forged from pure determination. When problems seem unbreakable, this mighty hammer smashes through mental barriers.' },
+        { id: 6, name: 'Bow of Insight', hp: 0.75, price: 15, category: 'Weapons', desc: 'An elegant weapon for the strategic learner. Draw back the string of concentration and release arrows of focused effort.' },
+        
+        // ARMOR
+        { id: 7, name: 'Royal Guardian Shield', hp: 0.875, price: 20, category: 'Armor', desc: 'A noble fleur-de-lis emblazoned shield that deflects distractions and negative thoughts.' },
+        { id: 8, name: 'Viking Round Shield', hp: 0.625, price: 12, category: 'Armor', desc: 'Forged from determination and discipline. Blocks social media notifications and unwanted interruptions.' },
+        { id: 9, name: 'Knight\'s Helm of Focus', hp: 0.75, price: 15, category: 'Armor', desc: 'A crystal-crested helmet that shields your mind from chaos. Protects against mental fatigue.' },
+        { id: 10, name: 'Titan\'s Breastplate', hp: 1.125, price: 35, category: 'Armor', desc: 'Legendary armor that fortifies your willpower. Grants immunity to burnout and doubles study endurance.' },
+        { id: 11, name: 'Dragon\'s Wrath', hp: 1.25, price: 45, category: 'Armor', desc: 'Summon the fierce power of an ancient dragon. Obliterates procrastination and conquers entire study modules.' },
+        
+        // SKILLS
+        { id: 12, name: 'Oracle\'s Foresight', hp: 0.625, price: 10, category: 'Skills', desc: 'Peer into the crystal ball to predict exam questions and plan your study path.' },
+        { id: 13, name: 'Treasure Map of Knowledge', hp: 0.75, price: 15, category: 'Skills', desc: 'Unlock secret strategies and discover the fastest routes to mastery.' },
+        { id: 14, name: 'Ring of Commitment', hp: 0.875, price: 20, category: 'Skills', desc: 'A golden oath ring that binds you to your goals. Grants unbreakable determination for 2 hours.' },
+        { id: 15, name: 'Sniper\'s Precision', hp: 1, price: 30, category: 'Skills', desc: 'Lock onto your target with laser focus. Eliminates mistakes and achieves 100% accuracy.' },
+        { id: 16, name: 'Energy Core Surge', hp: 0.875, price: 20, category: 'Skills', desc: 'Unleash a burst of electric concentration. Powers through toughest assignments.' },
+        { id: 17, name: 'Mind Palace Meditation', hp: 1, price: 30, category: 'Skills', desc: 'Activate your brain\'s full potential. Enhances memory retention by 200%.' },
+        
+        // CONSUMABLES
+        { id: 18, name: 'Elixir of Clarity', hp: 0.5, price: 8, category: 'Consumables', desc: 'A pure water droplet from the Fountain of Wisdom. Instantly clears mental fog.' },
+        { id: 19, name: 'Alchemist\'s Formula', hp: 0.75, price: 15, category: 'Consumables', desc: 'A mysterious molecular compound that rewires your brain for optimal learning.' },
+        { id: 20, name: 'Phoenix Tears Potion', hp: 0.875, price: 20, category: 'Consumables', desc: 'A legendary elixir that revives motivation from the ashes.' },
+        { id: 21, name: 'Owl\'s Wisdom Brew', hp: 1, price: 30, category: 'Consumables', desc: 'Brewed by the scholarly owl guardian. Grants photographic memory.' },
+        { id: 22, name: 'Certificate of Mastery', hp: 0.625, price: 10, category: 'Consumables', desc: 'Unlocks bonus XP and special abilities when you complete major milestones.' },
+        { id: 23, name: 'Torch of Inspiration', hp: 0.75, price: 15, category: 'Consumables', desc: 'Ignite your inner fire and illuminate the darkest study sessions.' }
+      ];
+
+      // ===== CORE FUNCTIONS =====
+      const handleLogin = () => {
+        if (!selectedUser) {
+          alert('Please select a user');
+          return;
         }
-        .card-image { padding: 10px 10px 5px 10px; background-color: #000; }
-        .card-image img { width: 100%; height: auto; display: block; border-radius: 5px; }
-        .card-body { padding: 10px; color: #000; }
-        .character-name { text-align: center; margin: 0 0 5px 0; font-size: 1.6em; padding: 5px 0; background-color: rgba(0, 0, 0, 0.1); color: #000; text-shadow: 1px 1px 1px #fff; border-radius: 3px; font-weight: bold; }
-        .character-username { text-align: center; margin: 0 0 10px 0; font-size: 0.85em; color: #333; font-weight: normal; }
-        .properties { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; background-color: rgba(255, 255, 255, 0.2); border-radius: 3px; font-size: 0.95em; font-weight: 500; }
-        .label { font-weight: normal; text-align: left; }
-        .value { font-weight: bold; text-align: right; }
-        .star { font-size: 1.3em; }
-        .timestamp { text-align: center; margin-top: 15px; font-size: 0.7em; color: #333; font-weight: normal; }
-      `}</style>
 
-      <div className="flex flex-col items-center gap-6 w-full">
-        <div 
-          className="card" 
-          onClick={(e) => {
-            e.currentTarget.classList.toggle('rotate');
-          }}
-        >
-          <div className="card-image">
-            <img src={profile.avatarUrl} alt="Profile Avatar" />
-          </div>
-          <div className="card-body">
-            <h1 className="character-name">{profile.avatarName}</h1>
-            <p className="character-username">@{profile.user}</p>
-            <div className="properties">
-              <div className="row">
-                <span className="label">Level :</span>
-                <span className="value">{profile.level}</span>
-              </div>
-              <div className="row">
-                <span className="label">Total XP :</span>
-                <span className="value">{profile.totalXP}</span>
-              </div>
-              <div className="row">
-                <span className="label">Rank :</span>
-                <span className="value">{profile.rank}</span>
-              </div>
-              <div className="row">
-                <span className="label">Skills :</span>
-                <span className="value">{profile.totalPurchased}</span>
-              </div>
-              <div className="row">
-                <span className="label">Star :</span>
-                <span className="value star">{'★'.repeat(profile.stars)}</span>
-              </div>
-              <div className="row">
-                <span className="label">Power :</span>
-                <span className="value">{profile.power.toFixed(1)}%</span>
-              </div>
-            </div>
-            <div className="timestamp">
-              Published: {profile.timestamp}
-            </div>
-          </div>
-        </div>
-
-        <button 
-          onClick={() => setViewingProfile(null)} 
-          className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-8 py-4 rounded-full font-bold transition w-full max-w-xs"
-        >
-          ← Back
-        </button>
-      </div>
-    </div>
-  );
-  }
-  // Show loading screen while Firebase loads
-  if (loading) {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-6xl mb-4">⚔️</div>
-        <h2 className="text-2xl font-bold text-white mb-2">Loading QuestForge...</h2>
-        <p className="text-purple-300">Connecting to Cloud ☁️</p>
-      </div>
-    </div>
-  );
-  }
-        if (appState === 'login') {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4">
-      <style>{`
-        @keyframes pulse-glow { 0%, 100% { text-shadow: 0 0 20px rgba(168, 85, 247, 0.5); } 50% { text-shadow: 0 0 40px rgba(168, 85, 247, 1); } }
-        .pulse-title { animation: pulse-glow 2s ease-in-out infinite; }
-      `}</style>
-
-      <div className="text-center mb-8 w-full">
-        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 pulse-title mb-2">
-          ⚔️ QuestForge
-        </h1>
-        <p class="text-base text-yellow-300 mb-1">Craft Your Learning Adventure</p>
-  <p class="text-sm text-purple-300">Powered by "My Task Manager"</p>
-  <p class="text-xs text-white">Developed by Bikr@m</p>
-  </div>
-
-      <div className="w-full max-w-xs">
-        <div className="bg-slate-800 border-2 border-purple-500 rounded-lg p-6 shadow-2xl">
-          <h2 className="text-xl font-bold text-white mb-5 text-center">Select Your Warrior</h2>
-
-          <div className="flex flex-col gap-3 mb-6">
-            {['Bikram', 'Piyali'].map((user) => (
-              <button
-                key={user}
-                onClick={() => setSelectedUser(user)}
-                className={`w-full p-4 rounded-lg font-bold transition-all duration-300 active:scale-95 ${
-                  selectedUser === user
-                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg shadow-yellow-400'
-                    : 'bg-slate-700 text-white'
-                }`}
-              >
-                {user}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-5 bg-slate-700 p-4 rounded-lg">
-            <p className="text-white text-xs font-semibold mb-2">Last Saved XP</p>
-            {selectedUser ? (
-              <p className="text-2xl font-bold text-yellow-400">{userData[selectedUser].totalXP} XP</p>
-            ) : (
-              <p className="text-gray-400 text-sm">Select a user</p>
-            )}
-          </div>
-
-          <div className="mb-6 bg-slate-700 p-4 rounded-lg">
-            <label className="block text-white text-xs font-semibold mb-2">
-              New XP Value (Optional)
-            </label>
-            <input
-              type="number"
-              value={newXPInput}
-              onChange={(e) => setNewXPInput(e.target.value)}
-              placeholder="Enter new XP"
-              className="w-full bg-slate-600 text-white border border-purple-400 rounded p-3 text-sm"
-            />
-          </div>
-
-          <button
-            onClick={handleLogin}
-            disabled={!selectedUser}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-95 text-white font-bold py-4 rounded-lg transition-all duration-300 disabled:opacity-50 text-base"
-          >
-            Enter Quest
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-  }
-
-  if (appState === 'dashboard') {
-  return (
-    <div 
-      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="bg-slate-900 border-b-2 border-purple-600 p-4">
-        <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 mb-2">⚔️ QuestForge</h1>
-        <h2 className="text-xl font-bold text-gray-300">Welcome, {currentUser}! 🎮</h2>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-md mx-auto">
-        <h1 className="text-2xl font-bold text-center text-white mb-8">Choose Your Path</h1>
-        
-        <div className="grid grid-cols-1 gap-4 w-full">
-          {[
-            { title: 'Profile', desc: 'Manage avatar & view stats', icon: '👤', action: 'profile' },
-            { title: 'Reward Store', desc: 'Buy and sell items', icon: '🪙', action: 'store' },
-            { title: 'Wall of Fame', desc: 'View published profiles', icon: '🏆', action: 'fame' }
-          ].map((card, i) => (
-            <div
-              key={i}
-              onClick={() => setAppState(card.action)}
-              className="bg-gradient-to-br from-purple-700 to-slate-800 border-2 border-yellow-400 p-6 rounded-xl cursor-pointer active:scale-95 transition-transform duration-200 touch-manipulation"
-            >
-              <div className="text-4xl mb-3">{card.icon}</div>
-              <h3 className="text-xl font-bold text-white mb-1">{card.title}</h3>
-              <p className="text-sm text-gray-300">{card.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-slate-900 border-t-2 border-purple-600 p-4 flex gap-3 justify-center">
-        <button 
-          onClick={() => alert('✅ Data Refreshed Successfully!')} 
-          className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-4 py-3 rounded-lg font-semibold transition text-sm"
-        >
-          Refresh
-        </button>
-        <button 
-          onClick={handleLogout} 
-          className="flex-1 bg-red-600 hover:bg-red-700 active:scale-95 text-white px-4 py-3 rounded-lg font-semibold transition text-sm"
-        >
-          Logout
-        </button>
-      </div>
-    </div>
-  );
-  }
-
-  if (appState === 'profile') {
-    const user = currentUser;
-    const userLevel = getUserLevel(userData[user].totalXP);
-    const power = getTotalPower(user);
-    const rank = getRank(power);
-    const remaining = userData[user].totalXP - userData[user].spentXP;
-
-    return (
-     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-  <div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
-  <button
-  onClick={() => setAppState('dashboard')}
-  className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
-  >
-  Main Menu
-  </button>
-  <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
-  Profile
-  </h1>
-  <button
-  onClick={handleLogout}
-  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
-  >
-  Logout
-  </button>
-  </div>
-
-        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8 flex flex-col items-center">
-            <div className="relative mb-6">
-              <div className="w-48 h-48 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-xl shadow-purple-500 border-4 border-yellow-400 overflow-hidden">
-                <img src={avatarUrls[userData[user].avatarId]} alt="avatar" className="w-full h-full object-cover" />
-              </div>
-            </div>
-
-            <h2 className="text-2xl font-bold text-white mb-4">{userData[user].avatarName}</h2>
-            
-            <div className="w-full mb-6">
-              <input
-                type="text"
-                value={userData[user].avatarName}
-                onChange={(e) => {
-                  const newData = JSON.parse(JSON.stringify(userData));
-                  newData[user].avatarName = e.target.value;
-                  setUserData(newData);
-                }}
-                className="w-full bg-slate-700 text-white border border-purple-400 rounded p-2 text-center"
-                placeholder="Give your Avatar a name"
-              />
-            </div>
-
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <button
-                onClick={() => {
-                  const newId = (userData[user].avatarId - 1 + avatarUrls.length) % avatarUrls.length;
-                  const newData = JSON.parse(JSON.stringify(userData));
-                  newData[user].avatarId = newId;
-                  setUserData(newData);
-                }}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold p-3 rounded-full transition transform hover:scale-110 shadow-lg"
-              >
-                ←
-              </button>
-              
-              <div className="text-sm text-gray-400">
-                {userData[user].avatarId + 1} / {avatarUrls.length}
-              </div>
-
-              <button
-                onClick={() => {
-                  const newId = (userData[user].avatarId + 1) % avatarUrls.length;
-                  const newData = JSON.parse(JSON.stringify(userData));
-                  newData[user].avatarId = newId;
-                  setUserData(newData);
-                }}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold p-3 rounded-full transition transform hover:scale-110 shadow-lg"
-              >
-                →
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8">
-            <div className="mb-6 pb-6 border-b border-purple-500">
-              <h3 className="text-xl font-bold text-yellow-300 mb-2">Level {userLevel.level}</h3>
-              <p className="fond-bold text-white">{userLevel.name}</p>
-              <div className="w-full bg-slate-700 rounded-full h-3 mt-3 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
-                  style={{ width: `${getXpProgress(userData[user].totalXP)}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-slate-700 p-4 rounded-full text-center">
-                <p className="text-gray-400 text-sm">Total XP</p>
-                <p className="text-2xl font-bold text-yellow-400">{userData[user].totalXP}</p>
-              </div>
-              <div className="bg-slate-700 p-4 rounded-full text-center">
-                <p className="text-gray-400 text-sm">Remaining XP</p>
-                <p className="text-2xl font-bold text-green-400">{remaining}</p>
-              </div>
-              <div className="bg-slate-700 p-4 rounded-full text-center">
-               <p className="text-gray-400 text-sm">Power (HP)</p>
-  <p
-  className={`text-2xl font-bold ${
-    power > 70
-      ? "text-green-400"
-      : power > 35
-      ? "text-yellow-400"
-      : "text-red-400"
-  }`}
-  >
-  {power.toFixed(1)}%
-  </p>
-
-              </div>
-              <div className="bg-slate-700 p-4 rounded-full text-center">
-              <p className="text-gray-400 text-sm">Total Items</p>
-             <p className="text-2xl font-bold text-yellow-400">{userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}</p>
-            </div>
-            </div>
-
-            <div className="bg-slate-700 p-4 rounded-full text-center mb-6">
-              <p className="text-gray-400 text-sm mb-2">Rank Stars</p>
-              <p className="text-3xl">{'⭐'.repeat(rank.stars)}</p>
-            </div>
-            <div className="bg-slate-700 p-4 rounded-full text-center mb-6">
-                <p className="text-gray-400 text-sm">Rank</p>
-                <p className="text-2xl font-bold text-blue-500">{rank.name}</p>
-              </div>
-
-            
-
-            <button
-              onClick={() => {
-                handlePublishProfile();
-              }}
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-2 py-2 rounded-full transition"
-            >
-            Publish Profile
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-    // ENTIRE STORE PAGE - Replace the whole if (appState === 'store') section with this clean version
-
-  if (appState === 'store') {
-  const user = currentUser;
-  const remaining = userData[user].totalXP - userData[user].spentXP;
-  const displayItems = getFilteredItems() || [];
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      {/* Description Modal */}
-      {showDescModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowDescModal(null)}
-        >
-          <div 
-            className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 max-w-sm w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-white">{showDescModal.name}</h3>
-              <button 
-                onClick={() => setShowDescModal(null)}
-                className="text-white text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            <p className="text-purple-300 text-sm mb-3">{showDescModal.category}</p>
-            <p className="text-gray-300 text-sm leading-relaxed">{showDescModal.desc}</p>
-            <div className="mt-4 flex gap-2">
-              <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                HP: {showDescModal.hp}
-              </span>
-              <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
-                {showDescModal.price} XP
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-between items-center mb-6 gap-2">
-        <button 
-          onClick={() => setAppState('dashboard')} 
-          className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-2 rounded-full font-bold text-xs transition"
-        >
-          Menu
-        </button>
-        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
-          Store
-        </h1>
-        <button 
-          onClick={handleLogout} 
-          className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-2 rounded-full font-bold text-xs transition"
-        >
-          Logout
-        </button>
-      </div>
-
-      <div className="max-w-md mx-auto">
-        <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm text-gray-400 mb-1">Available XP</h3>
-              <p className="text-2xl font-bold text-green-400">{remaining}</p>
-            </div>
-            <div className="text-right">
-              <h3 className="text-sm text-gray-400 mb-1">Total Items</h3>
-              <p className="text-2xl font-bold text-green-400">
-                {userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2 justify-center mb-2">
-            {[
-              { id: 'All Items', label: 'All' },
-              { id: 'Purchased', label: 'Purchased' },
-              { id: 'Equipped', label: 'Equipped' }
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setFilterCategory(cat.id)}
-                className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
-                  filterCategory === cat.id
-                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
-                    : 'bg-slate-700 text-white'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap gap-2 justify-center">
-            {[
-              { id: 'Weapons', label: 'Weapons' },
-              { id: 'Armor', label: 'Armor' },
-              { id: 'Skills', label: 'Skills' },
-              { id: 'Consumables', label: 'Potions' }
-            ].map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setFilterCategory(cat.id)}
-                className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
-                  filterCategory === cat.id
-                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
-                    : 'bg-slate-700 text-white'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {displayItems.length === 0 ? (
-          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 text-center">
-            <p className="text-gray-300">No items found in this category.</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {displayItems.map((item) => {
-              const showBuyButton = filterCategory === 'All Items' || ['Weapons', 'Armor', 'Skills', 'Consumables'].includes(filterCategory);
-              const showSellButton = item.isInInventory;
-              const showEquipButton = item.isInInventory && !item.isEquipped;
-              const showUnequipButton = item.isEquipped;
-              
-              return (
-                <div key={item.id} 
-                  className={`bg-slate-800 border-2 ${
-                    item.isEquipped ? 'border-yellow-400' : 'border-purple-500'
-                  } rounded-lg p-3 flex flex-col relative`}
-                >
-                  {/* Info Button - Top Right */}
-                  <button
-                    onClick={() => setShowDescModal(item)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold z-10"
-                  >
-                    i
-                  </button>
-
-                  {/* HP Badge - Top Left */}
-                  <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold">
-                    {item.hp}
-                  </div>
-                  
-                  {/* GIF Icon */}
-                  <div className="w-full aspect-square bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mb-2 mt-6 overflow-hidden">
-                    <img 
-                      src={itemGifs[item.id]} 
-                      alt={item.name}
-                      className="w-full h-full object-contain p-2"
-                    />
-                  </div>
-                  
-                  {/* Item Name */}
-                  <h4 className="text-white font-bold text-xs text-center mb-1 line-clamp-2 min-h-[2rem]">
-                    {item.name}
-                  </h4>
-                  
-                  {/* Price */}
-                  <div className="text-yellow-400 font-bold text-xs text-center mb-2">
-                    {item.price} XP
-                  </div>
-                  
-                  {/* Quantity */}
-                  {item.quantity > 0 && (
-                    <div className="text-green-400 font-bold text-xs text-center mb-2">
-                      Owned: ×{item.quantity}
-                    </div>
-                  )}
-                  
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-1.5 w-full mt-auto">
-                    {showBuyButton && (
-                      <button
-                        onClick={() => handleBuyItem(item)}
-                        disabled={remaining < item.price}
-                        className={`px-2 py-1.5 rounded-full font-bold text-xs transition ${
-                          remaining >= item.price
-                            ? 'bg-green-600 hover:bg-green-700 text-white'
-                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        Buy
-                      </button>
-                    )}
-                    
-                    {(showEquipButton || showUnequipButton) && (
-                      <button
-                        onClick={() => handleEquipItem(item.id)}
-                        className={`px-2 py-1.5 rounded-full font-bold text-xs transition ${
-                          showUnequipButton
-                            ? 'bg-red-600 hover:bg-red-700 text-white'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white'
-                        }`}
-                      >
-                        {showUnequipButton ? 'Unequip' : 'Equip'}
-                      </button>
-                    )}
-                    
-                    {showSellButton && (
-                      <button
-                        onClick={() => handleSellItem(item.id)}
-                        className="px-2 py-1.5 rounded-full font-bold text-xs bg-orange-600 hover:bg-orange-700 text-white transition"
-                      >
-                        Sell
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Purchase History */}
-      {userData[user].purchaseHistory.length > 0 && (
-        <div className="mt-8 max-w-md mx-auto bg-slate-800 border-2 border-purple-500 rounded-xl p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white">Purchase History</h3>
-            <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold text-xs">
-              {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)}
-            </span>
-          </div>
+        if (newXPInput.trim()) {
+          const xpValue = parseFloat(newXPInput);
+          if (isNaN(xpValue) || xpValue < 0) {
+            alert('Please enter a valid positive number for XP');
+            return;
+          }
           
-          <div className="grid grid-cols-4 gap-2">
-            {userData[user].purchaseHistory.map((hist) => {
-              const item = rewards.find(r => r.id === hist.itemId);
-              return (
-                <div key={hist.itemId} className="relative">
-                  <div className="aspect-square bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={itemGifs[item.id]} 
-                      alt={item.name}
-                      className="w-full h-full object-contain p-1"
+          const newUserData = {
+            ...userData,
+            [selectedUser]: {
+              ...userData[selectedUser],
+              totalXP: xpValue
+            }
+          };
+          setUserData(newUserData);
+        }
+        
+        setCurrentUser(selectedUser);
+        setAppState('dashboard');
+      };
+
+      const handleLogout = () => {
+        setAppState('login');
+        setCurrentUser(null);
+        setSelectedUser(null);
+        setViewingProfile(null);
+        setNewXPInput('');
+      };
+
+      const getUserLevel = (xp) => {
+        return levelRanges.find(l => xp >= l.min && xp <= l.max) || levelRanges[12];
+      };
+
+      const getXpProgress = (xp) => {
+        const level = getUserLevel(xp);
+        const levelXpRange = level.max - level.min;
+        const currentLevelXp = xp - level.min;
+        return (currentLevelXp / levelXpRange) * 100;
+      };
+
+      const getTotalPower = (user) => {
+        const inventory = userData[user].inventory;
+        const equipped = userData[user].equippedItems;
+
+        const power = equipped.reduce((sum, itemId) => {
+          const item = rewards.find(r => r.id === itemId);
+          const inventoryItem = inventory.find(inv => inv.itemId === itemId);
+          const quantity = inventoryItem ? inventoryItem.quantity : 1;
+          return sum + (item ? item.hp * quantity : 0);
+        }, 0);
+
+        return Math.min(power, 100);
+      };
+
+      const getRank = (power) => {
+        const ranks = [
+          { name: 'RECRUIT', stars: 1 },
+          { name: 'PRIVATE', stars: 2 },
+          { name: 'CORPORAL', stars: 3 },
+          { name: 'SERGEANT', stars: 4 },
+          { name: 'STAFF SERGEANT', stars: 5 },
+          { name: 'LIEUTENANT', stars: 6 },
+          { name: 'CAPTAIN', stars: 7 },
+          { name: 'MAJOR', stars: 8 },
+          { name: 'COLONEL', stars: 9 },
+          { name: 'GENERAL', stars: 10 }
+        ];
+        const rankIndex = Math.floor(power / 10);
+        return ranks[Math.min(rankIndex, 9)];
+      };
+
+      const handleBuyItem = (item) => {
+        const user = currentUser;
+        const remaining = userData[user].totalXP - userData[user].spentXP;
+        
+        if (remaining < item.price) {
+          alert(`Not enough XP! Need ${item.price} but have ${remaining}`);
+          return;
+        }
+
+        const newUserData = JSON.parse(JSON.stringify(userData));
+        const inventory = newUserData[user].inventory;
+        const existingItem = inventory.find(i => i.itemId === item.id);
+        
+        if (existingItem) {
+          existingItem.quantity += 1;
+        } else {
+          inventory.push({ itemId: item.id, quantity: 1 });
+        }
+
+        newUserData[user].spentXP += item.price;
+        
+        const history = newUserData[user].purchaseHistory;
+        const historyItem = history.find(h => h.itemId === item.id);
+        if (historyItem) {
+          historyItem.count += 1;
+        } else {
+          history.push({ itemId: item.id, count: 1 });
+        }
+
+        setUserData(newUserData);
+      };
+
+      const handleEquipItem = (itemId) => {
+        const user = currentUser;
+        const newUserData = JSON.parse(JSON.stringify(userData));
+        const equipped = newUserData[user].equippedItems;
+        
+        if (equipped.includes(itemId)) {
+          newUserData[user].equippedItems = equipped.filter(id => id !== itemId);
+        } else {
+          newUserData[user].equippedItems = [...equipped, itemId];
+        }
+        
+        setUserData(newUserData);
+      };
+
+      const handleSellItem = (itemId) => {
+        const user = currentUser;
+        const item = rewards.find(r => r.id === itemId);
+        const newUserData = JSON.parse(JSON.stringify(userData));
+        
+        const inventoryItem = newUserData[user].inventory.find(i => i.itemId === itemId);
+        if (inventoryItem) {
+          inventoryItem.quantity -= 1;
+          if (inventoryItem.quantity === 0) {
+            newUserData[user].inventory = newUserData[user].inventory.filter(i => i.itemId !== itemId);
+          }
+        }
+
+        newUserData[user].spentXP -= item.price;
+        newUserData[user].equippedItems = newUserData[user].equippedItems.filter(id => id !== itemId);
+        
+        setUserData(newUserData);
+      };
+
+      const handlePublishProfile = () => {
+        const user = currentUser;
+        const userLevel = getUserLevel(userData[user].totalXP);
+        const power = getTotalPower(user);
+        const rank = getRank(power);
+        const totalPurchased = userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0);
+
+        const newUserData = JSON.parse(JSON.stringify(userData));
+        newUserData[user].publishedProfile = {
+          avatarUrl: avatarUrls[userData[user].avatarId],
+          avatarName: userData[user].avatarName,
+          user: user,
+          level: userLevel.level,
+          levelName: userLevel.name,
+          rank: rank.name,
+          stars: rank.stars,
+          power: power,
+          totalXP: userData[user].totalXP,
+          equippedCount: userData[user].equippedItems.length,
+          totalPurchased: totalPurchased,
+          timestamp: new Date().toLocaleString()
+        };
+        setUserData(newUserData);
+        alert('✅ Profile Published Successfully! 🎉');
+      };
+
+      const getFilteredItems = () => {
+        const user = currentUser;
+        let items = [];
+
+        switch (filterCategory) {
+          case 'All Items':
+            items = rewards.map(item => {
+              const inventoryItem = userData[user].inventory.find(inv => inv.itemId === item.id);
+              return {
+                ...item,
+                quantity: inventoryItem ? inventoryItem.quantity : 0,
+                isInInventory: !!inventoryItem,
+                isEquipped: userData[user].equippedItems.includes(item.id)
+              };
+            });
+            break;
+
+          case 'Purchased':
+            items = userData[user].inventory
+              .filter(inv => !userData[user].equippedItems.includes(inv.itemId))
+              .map(inv => {
+                const item = rewards.find(r => r.id === inv.itemId);
+                return {
+                  ...item,
+                  quantity: inv.quantity,
+                  isInInventory: true,
+                  isEquipped: false
+                };
+              });
+            break;
+
+          case 'Equipped':
+            items = userData[user].equippedItems.map(itemId => {
+              const item = rewards.find(r => r.id === itemId);
+              const inventoryItem = userData[user].inventory.find(inv => inv.itemId === itemId);
+              return {
+                ...item,
+                quantity: inventoryItem ? inventoryItem.quantity : 0,
+                isInInventory: true,
+                isEquipped: true
+              };
+            });
+            break;
+
+          case 'Weapons':
+          case 'Armor':
+          case 'Skills':
+          case 'Consumables':
+            items = rewards
+              .filter(item => item.category === filterCategory)
+              .map(item => {
+                const inventoryItem = userData[user].inventory.find(inv => inv.itemId === item.id);
+                return {
+                  ...item,
+                  quantity: inventoryItem ? inventoryItem.quantity : 0,
+                  isInInventory: !!inventoryItem,
+                  isEquipped: userData[user].equippedItems.includes(item.id)
+                };
+              });
+            break;
+        }
+
+        return items;
+      };
+
+      // ===== RENDER COMPONENTS =====
+
+      if (viewingProfile) {
+        const profile = viewingProfile;
+        return (
+          <div 
+            className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="flex flex-col items-center gap-6 w-full">
+              <div 
+                className="profile-card" 
+                onClick={(e) => {
+                  e.currentTarget.classList.toggle('rotate');
+                }}
+              >
+                <div className="card-image">
+                  <img src={profile.avatarUrl} alt="Profile Avatar" />
+                </div>
+                <div className="card-body">
+                  <h1 className="character-name">{profile.avatarName}</h1>
+                  <p className="character-username">@{profile.user}</p>
+                  <div className="properties">
+                    <div className="property-row">
+                      <span className="property-label">Level :</span>
+                      <span className="property-value">{profile.level}</span>
+                    </div>
+                    <div className="property-row">
+                      <span className="property-label">Total XP :</span>
+                      <span className="property-value">{profile.totalXP}</span>
+                    </div>
+                    <div className="property-row">
+                      <span className="property-label">Rank :</span>
+                      <span className="property-value">{profile.rank}</span>
+                    </div>
+                    <div className="property-row">
+                      <span className="property-label">Skills :</span>
+                      <span className="property-value">{profile.totalPurchased}</span>
+                    </div>
+                    <div className="property-row">
+                      <span className="property-label">Star :</span>
+                      <span className="property-value star">{'★'.repeat(profile.stars)}</span>
+                    </div>
+                    <div className="property-row">
+                      <span className="property-label">Power :</span>
+                      <span className="property-value">{profile.power.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                  <div className="timestamp">
+                    Published: {profile.timestamp}
+                  </div>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setViewingProfile(null)} 
+                className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-8 py-4 rounded-full font-bold transition w-full max-w-xs"
+              >
+                ← Back
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      if (loading) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">⚔️</div>
+              <h2 className="text-2xl font-bold text-white mb-2">Loading QuestForge...</h2>
+              <p className="text-purple-300">Connecting to Cloud ☁️</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (appState === 'login') {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col items-center justify-center p-4">
+            <div className="text-center mb-8 w-full">
+              <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 pulse-title mb-2">
+                ⚔️ QuestForge
+              </h1>
+              <p className="text-base text-yellow-300 mb-1">Craft Your Learning Adventure</p>
+              <p className="text-sm text-purple-300">Powered by "My Task Manager"</p>
+              <p className="text-xs text-white">Developed by Bikr@m</p>
+            </div>
+
+            <div className="w-full max-w-xs">
+              <div className="bg-slate-800 border-2 border-purple-500 rounded-lg p-6 shadow-2xl">
+                <h2 className="text-xl font-bold text-white mb-5 text-center">Select Your Warrior</h2>
+
+                <div className="flex flex-col gap-3 mb-6">
+                  {['Bikram', 'Piyali'].map((user) => (
+                    <button
+                      key={user}
+                      onClick={() => setSelectedUser(user)}
+                      className={`w-full p-4 rounded-lg font-bold transition-all duration-300 active:scale-95 ${
+                        selectedUser === user
+                          ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg shadow-yellow-400'
+                          : 'bg-slate-700 text-white'
+                      }`}
+                    >
+                      {user}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mb-5 bg-slate-700 p-4 rounded-lg">
+                  <p className="text-white text-xs font-semibold mb-2">Last Saved XP</p>
+                  {selectedUser ? (
+                    <p className="text-2xl font-bold text-yellow-400">{userData[selectedUser].totalXP} XP</p>
+                  ) : (
+                    <p className="text-gray-400 text-sm">Select a user</p>
+                  )}
+                </div>
+
+                <div className="mb-6 bg-slate-700 p-4 rounded-lg">
+                  <label className="block text-white text-xs font-semibold mb-2">
+                    New XP Value (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    value={newXPInput}
+                    onChange={(e) => setNewXPInput(e.target.value)}
+                    placeholder="Enter new XP"
+                    className="w-full bg-slate-600 text-white border border-purple-400 rounded p-3 text-sm"
+                  />
+                </div>
+
+                {firebaseError && (
+                  <div className="mb-4 p-3 bg-red-600 text-white rounded text-sm">
+                    {firebaseError}
+                  </div>
+                )}
+
+                <button
+                  onClick={handleLogin}
+                  disabled={!selectedUser}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 active:scale-95 text-white font-bold py-4 rounded-lg transition-all duration-300 disabled:opacity-50 text-base"
+                >
+                  Enter Quest
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      if (appState === 'dashboard') {
+        return (
+          <div 
+            className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div className="bg-slate-900 border-b-2 border-purple-600 p-4">
+              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 mb-2">⚔️ QuestForge</h1>
+              <h2 className="text-xl font-bold text-gray-300">Welcome, {currentUser}! 🎮</h2>
+              {saving && <p className="text-green-400 text-sm">Saving data...</p>}
+              {firebaseError && <p className="text-red-400 text-sm">{firebaseError}</p>}
+            </div>
+
+            <div className="flex-1 flex flex-col items-center justify-center p-4 w-full max-w-md mx-auto">
+              <h1 className="text-2xl font-bold text-center text-white mb-8">Choose Your Path</h1>
+              
+              <div className="grid grid-cols-1 gap-4 w-full">
+                {[
+                  { title: 'Profile', desc: 'Manage avatar & view stats', icon: '👤', action: 'profile' },
+                  { title: 'Reward Store', desc: 'Buy and sell items', icon: '🪙', action: 'store' },
+                  { title: 'Wall of Fame', desc: 'View published profiles', icon: '🏆', action: 'fame' }
+                ].map((card, i) => (
+                  <div
+                    key={i}
+                    onClick={() => setAppState(card.action)}
+                    className="bg-gradient-to-br from-purple-700 to-slate-800 border-2 border-yellow-400 p-6 rounded-xl cursor-pointer active:scale-95 transition-transform duration-200 touch-manipulation"
+                  >
+                    <div className="text-4xl mb-3">{card.icon}</div>
+                    <h3 className="text-xl font-bold text-white mb-1">{card.title}</h3>
+                    <p className="text-sm text-gray-300">{card.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-900 border-t-2 border-purple-600 p-4 flex gap-3 justify-center">
+              <button 
+                onClick={() => {
+                  loadDataFromFirebase();
+                  alert('✅ Data Refreshed Successfully!');
+                }} 
+                className="flex-1 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-4 py-3 rounded-lg font-semibold transition text-sm"
+              >
+                Refresh
+              </button>
+              <button 
+                onClick={handleLogout} 
+                className="flex-1 bg-red-600 hover:bg-red-700 active:scale-95 text-white px-4 py-3 rounded-lg font-semibold transition text-sm"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      if (appState === 'profile') {
+        const user = currentUser;
+        const userLevel = getUserLevel(userData[user].totalXP);
+        const power = getTotalPower(user);
+        const rank = getRank(power);
+        const remaining = userData[user].totalXP - userData[user].spentXP;
+
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+            <div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
+              <button
+                onClick={() => setAppState('dashboard')}
+                className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
+              >
+                Main Menu
+              </button>
+              <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
+                Profile
+              </h1>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
+              >
+                Logout
+              </button>
+            </div>
+
+            <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+              <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8 flex flex-col items-center">
+                <div className="relative mb-6">
+                  <div className="w-48 h-48 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-xl shadow-purple-500 border-4 border-yellow-400 overflow-hidden">
+                    <img src={avatarUrls[userData[user].avatarId]} alt="avatar" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+
+                <h2 className="text-2xl font-bold text-white mb-4">{userData[user].avatarName}</h2>
+                
+                <div className="w-full mb-6">
+                  <input
+                    type="text"
+                    value={userData[user].avatarName}
+                    onChange={(e) => {
+                      const newData = JSON.parse(JSON.stringify(userData));
+                      newData[user].avatarName = e.target.value;
+                      setUserData(newData);
+                    }}
+                    className="w-full bg-slate-700 text-white border border-purple-400 rounded p-2 text-center"
+                    placeholder="Give your Avatar a name"
+                  />
+                </div>
+
+                <div className="flex items-center justify-center gap-4 mb-4">
+                  <button
+                    onClick={() => {
+                      const newId = (userData[user].avatarId - 1 + avatarUrls.length) % avatarUrls.length;
+                      const newData = JSON.parse(JSON.stringify(userData));
+                      newData[user].avatarId = newId;
+                      setUserData(newData);
+                    }}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold p-3 rounded-full transition transform hover:scale-110 shadow-lg"
+                  >
+                    ←
+                  </button>
+                  
+                  <div className="text-sm text-gray-400">
+                    {userData[user].avatarId + 1} / {avatarUrls.length}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const newId = (userData[user].avatarId + 1) % avatarUrls.length;
+                      const newData = JSON.parse(JSON.stringify(userData));
+                      newData[user].avatarId = newId;
+                      setUserData(newData);
+                    }}
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold p-3 rounded-full transition transform hover:scale-110 shadow-lg"
+                  >
+                    →
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8">
+                <div className="mb-6 pb-6 border-b border-purple-500">
+                  <h3 className="text-xl font-bold text-yellow-300 mb-2">Level {userLevel.level}</h3>
+                  <p className="font-bold text-white">{userLevel.name}</p>
+                  <div className="w-full bg-slate-700 rounded-full h-3 mt-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-yellow-400 to-orange-500 transition-all duration-500"
+                      style={{ width: `${getXpProgress(userData[user].totalXP)}%` }}
                     />
                   </div>
-                  <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
-                    ×{hist.count}
-                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-  if (appState === 'fame') {
-    const allProfiles = [];
-    
-    if (userData.Bikram.publishedProfile) {
-      allProfiles.push({ ...userData.Bikram.publishedProfile, id: 'bikram' });
-    }
-    if (userData.Piyali.publishedProfile) {
-      allProfiles.push({ ...userData.Piyali.publishedProfile, id: 'piyali' });
-    }
 
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-  <div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
-  <button
-  onClick={() => setAppState('dashboard')}
-  className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
-  >
-  Main Menu
-  </button>
-  <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
-  Wall of Fame
-  </h1>
-  <button
-  onClick={handleLogout}
-  className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
-  >
-  Logout
-  </button>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-slate-700 p-4 rounded-full text-center">
+                    <p className="text-gray-400 text-sm">Total XP</p>
+                    <p className="text-2xl font-bold text-yellow-400">{userData[user].totalXP}</p>
+                  </div>
+                  <div className="bg-slate-700 p-4 rounded-full text-center">
+                    <p className="text-gray-400 text-sm">Remaining XP</p>
+                    <p className="text-2xl font-bold text-green-400">{remaining}</p>
+                  </div>
+                  <div className="bg-slate-700 p-4 rounded-full text-center">
+                    <p className="text-gray-400 text-sm">Power (HP)</p>
+                    <p className={`text-2xl font-bold ${
+                      power > 70 ? "text-green-400" : power > 35 ? "text-yellow-400" : "text-red-400"
+                    }`}>
+                      {power.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="bg-slate-700 p-4 rounded-full text-center">
+                    <p className="text-gray-400 text-sm">Total Items</p>
+                    <p className="text-2xl font-bold text-yellow-400">
+                      {userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}
+                    </p>
+                  </div>
+                </div>
 
-  </div>
+                <div className="bg-slate-700 p-4 rounded-full text-center mb-6">
+                  <p className="text-gray-400 text-sm mb-2">Rank Stars</p>
+                  <p className="text-3xl">{'⭐'.repeat(rank.stars)}</p>
+                </div>
+                <div className="bg-slate-700 p-4 rounded-full text-center mb-6">
+                  <p className="text-gray-400 text-sm">Rank</p>
+                  <p className="text-2xl font-bold text-blue-500">{rank.name}</p>
+                </div>
 
-        <div className="max-w-6xl mx-auto">
-          {allProfiles.length === 0 ? (
-            <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-12 text-center">
-              <p className="text-gray-300 text-xl">No profiles published yet. Be the first to publish your profile!</p>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-8">
-              {allProfiles.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="bg-gradient-to-br from-yellow-600 via-yellow-500 to-orange-600 rounded-2xl p-8 shadow-2xl shadow-yellow-500 hover:scale-105 transition-transform duration-300"
+                <button
+                  onClick={handlePublishProfile}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold px-2 py-2 rounded-full transition"
                 >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg mb-4 border-4 border-white overflow-hidden">
-                      <img src={profile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                    </div>
-                    
-                    <h2 className="text-3xl font-bold text-white drop-shadow-lg mb-1">{profile.avatarName}</h2>
-                    <p className="text-xl text-gray-900 font-semibold mb-4">@{profile.user}</p>
-                    
-                    <div className="w-full bg-white bg-opacity-30 rounded-lg p-4 mb-4 backdrop-blur">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-900 font-semibold">Level</p>
-                          <p className="text-2xl font-bold text-white">{profile.level}</p>
-                          <p className="text-xs text-gray-800">{profile.levelName}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-900 font-semibold">Total XP</p>
-                          <p className="text-2xl font-bold text-white">{profile.totalXP}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-900 font-semibold">Power</p>
-                          <p className="text-2xl font-bold text-white">{profile.power.toFixed(1)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-900 font-semibold">Items</p>
-                          <p className="text-2xl font-bold text-white">{profile.totalPurchased}</p>
-                        </div>
-                      </div>
-                    </div>
+                  Publish Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
 
-                    <div className="w-full mb-4">
-                      <p className="text-sm text-gray-900 font-semibold mb-2">Military Rank</p>
-                      <p className="text-2xl font-bold text-white drop-shadow-lg">{profile.rank}</p>
-                      <p className="text-2xl">{'★'.repeat(profile.stars)}</p>
-                    </div>
+      if (appState === 'store') {
+        const user = currentUser;
+        const remaining = userData[user].totalXP - userData[user].spentXP;
+        const displayItems = getFilteredItems() || [];
 
-                    <p className="text-xs text-gray-800 mb-4">Published: {profile.timestamp}</p>
-
-                    <button
-                      onClick={() => setViewingProfile(profile)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded-full font-semibold transition"
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+            {showDescModal && (
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+                onClick={() => setShowDescModal(null)}
+              >
+                <div 
+                  className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 max-w-sm w-full"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-bold text-white">{showDescModal.name}</h3>
+                    <button 
+                      onClick={() => setShowDescModal(null)}
+                      className="text-white text-2xl leading-none"
                     >
-                      View Profile Card
+                      ×
                     </button>
                   </div>
+                  <p className="text-purple-300 text-sm mb-3">{showDescModal.category}</p>
+                  <p className="text-gray-300 text-sm leading-relaxed">{showDescModal.desc}</p>
+                  <div className="mt-4 flex gap-2">
+                    <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                      HP: {showDescModal.hp}
+                    </span>
+                    <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                      {showDescModal.price} XP
+                    </span>
+                  </div>
                 </div>
-              ))}
+              </div>
+            )}
+
+            <div className="flex justify-between items-center mb-6 gap-2">
+              <button 
+                onClick={() => setAppState('dashboard')} 
+                className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-2 rounded-full font-bold text-xs transition"
+              >
+                Menu
+              </button>
+              <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
+                Store
+              </h1>
+              <button 
+                onClick={handleLogout} 
+                className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-2 rounded-full font-bold text-xs transition"
+              >
+                Logout
+              </button>
             </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
-  return null;
-  };
+            <div className="max-w-md mx-auto">
+              <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm text-gray-400 mb-1">Available XP</h3>
+                    <p className="text-2xl font-bold text-green-400">{remaining}</p>
+                  </div>
+                  <div className="text-right">
+                    <h3 className="text-sm text-gray-400 mb-1">Total Items</h3>
+                    <p className="text-2xl font-bold text-green-400">
+                      {userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <div className="flex flex-wrap gap-2 justify-center mb-2">
+                  {[
+                    { id: 'All Items', label: 'All' },
+                    { id: 'Purchased', label: 'Purchased' },
+                    { id: 'Equipped', label: 'Equipped' }
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setFilterCategory(cat.id)}
+                      className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
+                        filterCategory === cat.id
+                          ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
+                          : 'bg-slate-700 text-white'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
 
-        // Mount the app
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<QuestForge />);
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {[
+                    { id: 'Weapons', label: 'Weapons' },
+                    { id: 'Armor', label: 'Armor' },
+                    { id: 'Skills', label: 'Skills' },
+                    { id: 'Consumables', label: 'Potions' }
+                  ].map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setFilterCategory(cat.id)}
+                      className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
+                        filterCategory === cat.id
+                          ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
+                          : 'bg-slate-700 text-white'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {displayItems.length === 0 ? (
+                <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 text-center">
+                  <p className="text-gray-300">No items found in this category.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {displayItems.map((item) => {
+                    const showBuyButton = filterCategory === 'All Items' || ['Weapons', 'Armor', 'Skills', 'Consumables'].includes(filterCategory);
+                    const showSellButton = item.isInInventory;
+                    const showEquipButton = item.isInInventory && !item.isEquipped;
+                    const showUnequipButton = item.isEquipped;
+                    
+                    return (
+                      <div key={item.id} 
+                        className={`bg-slate-800 border-2 ${
+                          item.isEquipped ? 'border-yellow-400' : 'border-purple-500'
+                        } rounded-lg p-3 flex flex-col relative`}
+                      >
+                        <button
+                          onClick={() => setShowDescModal(item)}
+                          className="absolute top-2 right-2 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold z-10"
+                        >
+                          i
+                        </button>
+
+                        <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold">
+                          {item.hp}
+                        </div>
+                        
+                        <div className="w-full aspect-square bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mb-2 mt-6 overflow-hidden">
+                          <img 
+                            src={itemGifs[item.id]} 
+                            alt={item.name}
+                            className="w-full h-full object-contain p-2"
+                            onError={(e) => {
+                              e.target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiBmaWxsPSIjN0Y0N0JGIi8+Cjx0ZXh0IHg9IjUwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjEyIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+Tm8gSW1hZ2U8L3RleHQ+Cjwvc3ZnPg==';
+                            }}
+                          />
+                        </div>
+                        
+                        <h4 className="text-white font-bold text-xs text-center mb-1 line-clamp-2 min-h-[2rem]">
+                          {item.name}
+                        </h4>
+                        
+                        <div className="text-yellow-400 font-bold text-xs text-center mb-2">
+                          {item.price} XP
+                        </div>
+                        
+                        {item.quantity > 0 && (
+                          <div className="text-green-400 font-bold text-xs text-center mb-2">
+                            Owned: ×{item.quantity}
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-col gap-1.5 w-full mt-auto">
+                          {showBuyButton && (
+                            <button
+                              onClick={() => handleBuyItem(item)}
+                              disabled={remaining < item.price}
+                              className={`px-2 py-1.5 rounded-full font-bold text-xs transition ${
+                                remaining >= item.price
+                                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                                  : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                              }`}
+                            >
+                              Buy
+                            </button>
+                          )}
+                          
+                          {(showEquipButton || showUnequipButton) && (
+                            <button
+                              onClick={() => handleEquipItem(item.id)}
+                              className={`px-2 py-1.5 rounded-full font-bold text-xs transition ${
+                                showUnequipButton
+                                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                              }`}
+                            >
+                              {showUnequipButton ? 'Unequip' : 'Equip'}
+                            </button>
+                          )}
+                          
+                          {showSellButton && (
+                            <button
+                              onClick={() => handleSellItem(item.id)}
+                              className="px-2 py-1.5 rounded-full font-bold text-xs bg-orange-600 hover:bg-orange-700 text-white transition"
+                            >
+                              Sell
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {userData[user].purchaseHistory.length > 0 && (
+              <div className="mt-8 max-w-md mx-auto bg-slate-800 border-2 border-purple-500 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-white">Purchase History</h3>
+                  <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold text-xs">
+                    {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2">
+                  {userData[user].purchaseHistory.map((hist) => {
+                    const item = rewards.find(r => r.id === hist.itemId);
+                    return (
+                      <div key={hist.itemId} className="relative">
+                        <div className="aspect-square bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center overflow-hidden">
+                          <img 
+                            src={itemGifs[item.id]} 
+                            alt={item.name}
+                            className="w-full h-full object-contain p-1"
+                          />
+                        </div>
+                        <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
+                          ×{hist.count}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      if (appState === 'fame') {
+        const allProfiles = [];
+        
+        if (userData.Bikram.publishedProfile) {
+          allProfiles.push({ ...userData.Bikram.publishedProfile, id: 'bikram' });
+        }
+        if (userData.Piyali.publishedProfile) {
+          allProfiles.push({ ...userData.Piyali.publishedProfile, id: 'piyali' });
+        }
+
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
+            <div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
+              <button
+                onClick={() => setAppState('dashboard')}
+                className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
+              >
+                Main Menu
+              </button>
+              <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
+                Wall of Fame
+              </h1>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
+              >
+                Logout
+              </button>
+            </div>
+
+            <div className="max-w-6xl mx-auto">
+              {allProfiles.length === 0 ? (
+                <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-12 text-center">
+                  <p className="text-gray-300 text-xl">No profiles published yet. Be the first to publish your profile!</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-8">
+                  {allProfiles.map((profile) => (
+                    <div
+                      key={profile.id}
+                      className="bg-gradient-to-br from-yellow-600 via-yellow-500 to-orange-600 rounded-2xl p-8 shadow-2xl shadow-yellow-500 hover:scale-105 transition-transform duration-300"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-32 h-32 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg mb-4 border-4 border-white overflow-hidden">
+                          <img src={profile.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                        </div>
+                        
+                        <h2 className="text-3xl font-bold text-white drop-shadow-lg mb-1">{profile.avatarName}</h2>
+                        <p className="text-xl text-gray-900 font-semibold mb-4">@{profile.user}</p>
+                        
+                        <div className="w-full bg-white bg-opacity-30 rounded-lg p-4 mb-4 backdrop-blur">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-900 font-semibold">Level</p>
+                              <p className="text-2xl font-bold text-white">{profile.level}</p>
+                              <p className="text-xs text-gray-800">{profile.levelName}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-900 font-semibold">Total XP</p>
+                              <p className="text-2xl font-bold text-white">{profile.totalXP}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-900 font-semibold">Power</p>
+                              <p className="text-2xl font-bold text-white">{profile.power.toFixed(1)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-900 font-semibold">Items</p>
+                              <p className="text-2xl font-bold text-white">{profile.totalPurchased}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="w-full mb-4">
+                          <p className="text-sm text-gray-900 font-semibold mb-2">Military Rank</p>
+                          <p className="text-2xl font-bold text-white drop-shadow-lg">{profile.rank}</p>
+                          <p className="text-2xl">{'★'.repeat(profile.stars)}</p>
+                        </div>
+
+                        <p className="text-xs text-gray-800 mb-4">Published: {profile.timestamp}</p>
+
+                        <button
+                          onClick={() => setViewingProfile(profile)}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-2 py-2 rounded-full font-semibold transition"
+                        >
+                          View Profile Card
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      return null;
+    };
+
+    // Mount the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<QuestForge />);
   </script>
 </body>
 </html>
