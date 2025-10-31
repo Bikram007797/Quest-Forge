@@ -84,6 +84,7 @@
             const [showStore, setShowStore] = React.useState(false);
             const [touchStart, setTouchStart] = React.useState(null);
   const [touchEnd, setTouchEnd] = React.useState(null);
+  const [showDescModal, setShowDescModal] = React.useState(null);
 
   const handleTouchStart = (e) => {
   setTouchStart(e.targetTouches[0].clientX);
@@ -268,32 +269,66 @@
     { level: 12, min: 3851, max: 4500, name: 'Mythic Scholar' },
     { level: 13, min: 4501, max: 5000, name: 'Ultimate Sage' }
   ];
+  const itemGifs = {
+  1: '/assets/weapons/blade-of-clarity.gif',
+  2: '/assets/weapons/executioners-axe.gif',
+  3: '/assets/weapons/siege-catapult.gif',
+4:'/assets/weapons/thunder-sword.gif'
+5:'/assets/weapons/mace-of-massacre.gif'
+6:'/assets/weapons/bow-of-insight.gif'
+  7: '/assets/armor/royal-guardian-shield.gif',
+  8: '/assets/armor/viking-round-shield.gif',
+  9: '/assets/armor/knights-helm.gif',
+  10: '/assets/armor/titans-breastplate.gif',
+11:'/assets/armor/dragons-wrath.gif',
+  12: '/assets/skills/oracles-foresight.gif',
+  13: '/assets/skills/treasure-map.gif',
+  14: '/assets/skills/ring-of-commitment.gif',
+  15: '/assets/skills/snipers-precision.gif',
+  16: '/assets/skills/energy-core-surge.gif',
+  17: '/assets/skills/mind-palace.gif',
+  18: '/assets/potions/elixir-of-clarity.gif',
+  19: '/assets/potions/alchemists-formula.gif',
+  20: '/assets/potions/phoenix-tears.gif',
+  21: '/assets/potions/owls-wisdom.gif',
+  22: '/assets/potions/certificate-of-mastery.gif'
+23:'/assets/potions/torch-of-inspiration.gif',
+ };
 
   const rewards = [
-  { id: 1, name: 'Iron Sword', hp: 0.625, price: 10, category: 'Weapons', desc: 'Increases focus during study sessions', emoji: '🗡️' },
-  { id: 2, name: 'Steel Mace', hp: 0.75, price: 15, category: 'Weapons', desc: 'Boosts memory retention', emoji: '🔨' },
-  { id: 3, name: 'Ancient Staff', hp: 0.875, price: 20, category: 'Weapons', desc: 'Enhances analytical thinking', emoji: '📜' },
-  { id: 4, name: 'Golden Bow', hp: 0.75, price: 15, category: 'Weapons', desc: 'Sharpens precision', emoji: '🏹' },
-  { id: 5, name: 'Cursed Blade', hp: 1, price: 30, category: 'Weapons', desc: 'Ultimate study power', emoji: '⚡' },
-
-  { id: 6, name: 'Iron Armor', hp: 0.625, price: 10, category: 'Armor', desc: 'Protects against distractions', emoji: '🛡️' },
-  { id: 7, name: 'Steel Plate', hp: 0.75, price: 15, category: 'Armor', desc: 'Shields procrastination', emoji: '🧥' },
-  { id: 8, name: 'Mithril Chest', hp: 0.875, price: 20, category: 'Armor', desc: 'Legendary defense', emoji: '👑' },
-  { id: 9, name: 'Dragon Scale', hp: 0.75, price: 15, category: 'Armor', desc: 'Builds confidence', emoji: '💎' },
-  { id: 10, name: 'Void Cloak', hp: 1, price: 30, category: 'Armor', desc: 'Ultimate protection', emoji: '🌑' },
-
-  { id: 11, name: 'Deep Focus', hp: 0.625, price: 10, category: 'Skills', desc: 'Longer sessions', emoji: '🧠' },
-  { id: 12, name: 'Speed Reading', hp: 0.75, price: 15, category: 'Skills', desc: 'Process faster', emoji: '⚡' },
-  { id: 13, name: 'Perfect Recall', hp: 0.875, price: 20, category: 'Skills', desc: 'Never forget', emoji: '🎯' },
-  { id: 14, name: 'Knowledge Synthesis', hp: 0.75, price: 15, category: 'Skills', desc: 'Connect concepts', emoji: '🔮' },
-  { id: 15, name: 'Mastery Aura', hp: 1, price: 30, category: 'Skills', desc: 'Unstoppable learning', emoji: '🌟' },
-
-  { id: 16, name: 'Energy Potion', hp: 0.625, price: 10, category: 'Consumables', desc: 'Restore stamina', emoji: '🧪' },
-  { id: 17, name: 'Wisdom Elixir', hp: 0.75, price: 15, category: 'Consumables', desc: 'Clarity of mind', emoji: '💊' },
-  { id: 18, name: 'Inspiration Flask', hp: 0.875, price: 20, category: 'Consumables', desc: 'Creative spark', emoji: '🔥' },
-  { id: 19, name: 'Phoenix Tears', hp: 0.75, price: 15, category: 'Consumables', desc: 'Recover fast', emoji: '💧' },
-  { id: 20, name: 'Omniscience Brew', hp: 1, price: 30, category: 'Consumables', desc: 'Transcend limits', emoji: '✨' }
-  ];
+  // WEAPONS
+  { id: 1, name: 'Blade of Clarity', hp: 0.625, price: 10, category: 'Weapons', desc: 'A shimmering sword that cuts through confusion and brain fog. Increases focus precision by 40% during study sessions.' },
+  { id: 2, name: 'Executioner\'s Axe', hp: 0.875, price: 20, category: 'Weapons', desc: 'A devastating double-bladed weapon that obliterates procrastination. Perfect for chopping down massive task lists with brutal efficiency.' },
+  { id: 3, name: 'Siege Catapult', hp: 0.75, price: 15, category: 'Weapons', desc: 'An ancient war machine that launches your productivity skyward. Tackles multiple assignments simultaneously with explosive power.' },
+  { id: 4, name: 'Thunder Sword', hp: 0.625, price: 10, category: 'Weapons', desc: 'Legendary paired swords wielded by ancient scholar-warriors. Strike from two angles simultaneously - master both theory and practice. The left blade cuts through confusion while the right blade carves paths to understanding. Perfect for conquering complex subjects that require dual perspectives.' },
+  { id: 5, name: 'Mace of Massacre', hp: 0.875, price: 20, category: 'Weapons', desc: 'A brutal instrument forged from pure determination. When problems seem unbreakable, this mighty hammer smashes through mental barriers with relentless force. Each crushing blow turns obstacles into stepping stones. Favored by warriors who refuse to quit until every challenge is pulverized into dust.' },
+  { id: 6, name: 'Bow of Insight', hp: 0.75, price: 15, category: 'Weapons', desc: 'An elegant weapon for the strategic learner. Draw back the string of concentration and release arrows of focused effort that never miss their mark. Each shot pierces through distractions and hits the bullseye of comprehension. Ideal for targeting specific learning objectives with deadly accuracy.' },
+  
+  // ARMOR
+  { id: 7, name: 'Royal Guardian Shield', hp: 0.875, price: 20, category: 'Armor', desc: 'A noble fleur-de-lis emblazoned shield that deflects distractions and negative thoughts. Worn by legendary scholars throughout history.' },
+  { id: 8, name: 'Viking Round Shield', hp: 0.625, price: 12, category: 'Armor', desc: 'Forged from determination and discipline. Blocks social media notifications and unwanted interruptions with Viking resilience.' },
+  { id: 9, name: 'Knight\'s Helm of Focus', hp: 0.75, price: 15, category: 'Armor', desc: 'A crystal-crested helmet that shields your mind from chaos. Protects against mental fatigue and maintains concentration.' },
+  { id: 10, name: 'Titan\'s Breastplate', hp: 1.125, price: 35, category: 'Armor', desc: 'Legendary armor that fortifies your willpower. Grants immunity to burnout and doubles your study endurance.' },
+   { id: 11, name: 'Dragon\'s Wrath', hp: 1.25, price: 45, category: 'Armor', desc: 'Summon the fierce power of an ancient dragon. Obliterates procrastination and conquers entire study modules in one session.' },
+  
+  // SKILLS
+  { id: 12, name: 'Oracle\'s Foresight', hp: 0.625, price: 10, category: 'Skills', desc: 'Peer into the crystal ball to predict exam questions and plan your study path. Reveals hidden patterns in complex subjects.' },
+  { id: 13, name: 'Treasure Map of Knowledge', hp: 0.75, price: 15, category: 'Skills', desc: 'Unlock secret strategies and discover the fastest routes to mastery. Navigate through difficult topics with ease.' },
+  { id: 14, name: 'Ring of Commitment', hp: 0.875, price: 20, category: 'Skills', desc: 'A golden oath ring that binds you to your goals. Once activated, grants unbreakable determination for 2 hours.' },
+  
+  { id: 15, name: 'Sniper\'s Precision', hp: 1, price: 30, category: 'Skills', desc: 'Lock onto your target with laser focus. Eliminates mistakes and achieves 100% accuracy on practice problems.' },
+  { id: 16, name: 'Energy Core Surge', hp: 0.875, price: 20, category: 'Skills', desc: 'Unleash a burst of electric concentration. Powers through the toughest assignments with lightning speed.' },
+  { id: 17, name: 'Mind Palace Meditation', hp: 1, price: 30, category: 'Skills', desc: 'Activate your brain\'s full potential. Enhances memory retention by 200% and unlocks deep understanding.' },
+ 
+  
+  // POTIONS
+  { id: 18, name: 'Elixir of Clarity', hp: 0.5, price: 8, category: 'Consumables', desc: 'A pure water droplet from the Fountain of Wisdom. Instantly clears mental fog and refreshes your thinking.' },
+  { id: 19, name: 'Alchemist\'s Formula', hp: 0.75, price: 15, category: 'Consumables', desc: 'A mysterious molecular compound that rewires your brain for optimal learning. Boosts comprehension by 50% for 3 hours.' },
+  { id: 20, name: 'Phoenix Tears Potion', hp: 0.875, price: 20, category: 'Consumables', desc: 'A legendary orange and gold elixir that revives motivation from the ashes. Grants complete mental regeneration.' },
+  { id: 21, name: 'Owl\'s Wisdom Brew', hp: 1, price: 30, category: 'Consumables', desc: 'Brewed by the scholarly owl guardian. Grants photographic memory and the ability to absorb information at incredible speeds.' },
+  { id: 22, name: 'Certificate of Mastery', hp: 0.625, price: 10, category: 'Consumables', desc: 'Not a potion but a power-up! Unlocks bonus XP and special abilities when you complete major milestones. The ultimate reward.' },
+  { id: 23, name: 'Torch of Inspiration', hp: 0.75, price: 15, category: 'Consumables', desc: 'Ignite your inner fire and illuminate the darkest study sessions. Burns away doubt and lights the path to success.' }
+];
 
   const [newXPInput, setNewXPInput] = React.useState('');
 
@@ -926,202 +961,253 @@
   const displayItems = getFilteredItems() || [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-      <div className="flex justify-between items-center mb-8 gap-2 sm:gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+      {/* Description Modal */}
+      {showDescModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowDescModal(null)}
+        >
+          <div 
+            className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-white">{showDescModal.name}</h3>
+              <button 
+                onClick={() => setShowDescModal(null)}
+                className="text-white text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            <p className="text-purple-300 text-sm mb-3">{showDescModal.category}</p>
+            <p className="text-gray-300 text-sm leading-relaxed">{showDescModal.desc}</p>
+            <div className="mt-4 flex gap-2">
+              <span className="bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                HP: {showDescModal.hp}
+              </span>
+              <span className="bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold">
+                {showDescModal.price} XP
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center mb-6 gap-2">
         <button 
           onClick={() => setAppState('dashboard')} 
-          className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
+          className="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-3 py-2 rounded-full font-bold text-xs transition"
         >
-          Main Menu
+          Menu
         </button>
-        <h1 className="text-3xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500 text-center">
-          Reward Store
+        <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-pink-500">
+          Store
         </h1>
         <button 
           onClick={handleLogout} 
-          className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-1 rounded-full font-bold text-xs sm:text-sm transition"
+          className="bg-red-600 hover:bg-red-700 active:scale-95 text-white px-3 py-2 rounded-full font-bold text-xs transition"
         >
           Logout
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-12">
-          <div className="bg-slate-800 border-2 border-purple-500 rounded-full p-6 mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg text-gray-400 mb-1">Available XP</h3>
-                <p className="text-3xl font-bold text-green-400">{remaining} XP</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <h3 className="text-lg text-gray-400 mb-1">Total Purchased</h3>
-                <p className="text-3xl font-bold text-green-400">{userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}</p>
-                  
-                </div>
-              </div>
+      <div className="max-w-md mx-auto">
+        <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm text-gray-400 mb-1">Available XP</h3>
+              <p className="text-2xl font-bold text-green-400">{remaining}</p>
+            </div>
+            <div className="text-right">
+              <h3 className="text-sm text-gray-400 mb-1">Total Items</h3>
+              <p className="text-2xl font-bold text-green-400">
+                {userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)}
+              </p>
+            </div>
+          </div>
+        </div>
         
+        <div className="mb-4">
+          <div className="flex flex-wrap gap-2 justify-center mb-2">
+            {[
+              { id: 'All Items', label: 'All' },
+              { id: 'Purchased', label: 'Purchased' },
+              { id: 'Equipped', label: 'Equipped' }
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCategory(cat.id)}
+                className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
+                  filterCategory === cat.id
+                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
+                    : 'bg-slate-700 text-white'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
-          
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2 justify-center">
-              {[
-                { id: 'All Items', label: 'All' },
-                { id: 'Purchased', label: 'Purchased' },
-                { id: 'Equipped', label: 'Equipped' }
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setFilterCategory(cat.id)}
-                  className={`px-3 py-1 rounded-full font-semibold transition text-sm ${
-                    filterCategory === cat.id
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg'
-                      : 'bg-slate-700 text-white hover:bg-slate-600'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
 
-            <div className="flex flex-wrap gap-2 justify-center mt-2">
-              {[
-                { id: 'Weapons', label: 'Weapons' },
-                { id: 'Armor', label: 'Armor' },
-                { id: 'Skills', label: 'Skills' },
-                { id: 'Consumables', label: 'Potions' }
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setFilterCategory(cat.id)}
-                  className={`px-3 py-1 rounded-full font-semibold transition text-sm ${
-                    filterCategory === cat.id
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black shadow-lg'
-                      : 'bg-slate-700 text-white hover:bg-slate-600'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {[
+              { id: 'Weapons', label: 'Weapons' },
+              { id: 'Armor', label: 'Armor' },
+              { id: 'Skills', label: 'Skills' },
+              { id: 'Consumables', label: 'Potions' }
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setFilterCategory(cat.id)}
+                className={`px-3 py-1 rounded-full font-semibold transition text-xs ${
+                  filterCategory === cat.id
+                    ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-black'
+                    : 'bg-slate-700 text-white'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
           </div>
-          
-          {displayItems.length === 0 ? (
-            <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-8 text-center">
-              <p className="text-gray-300 text-lg">No items found in this category.</p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {displayItems.map((item) => {
-                const showBuyButton = filterCategory === 'All Items' || ['Weapons', 'Armor', 'Skills', 'Consumables'].includes(filterCategory);
-                const showSellButton = item.isInInventory;
-                const showEquipButton = item.isInInventory && !item.isEquipped;
-                const showUnequipButton = item.isEquipped;
-                
-                return (
-                  <div key={item.id} 
-                    className={`bg-slate-800 border-2 ${
-                      item.isEquipped ? 'border-yellow-400' : 'border-purple-500'
-                    } rounded-lg p-6 hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center relative`}
+        </div>
+        
+        {displayItems.length === 0 ? (
+          <div className="bg-slate-800 border-2 border-purple-500 rounded-xl p-6 text-center">
+            <p className="text-gray-300">No items found in this category.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {displayItems.map((item) => {
+              const showBuyButton = filterCategory === 'All Items' || ['Weapons', 'Armor', 'Skills', 'Consumables'].includes(filterCategory);
+              const showSellButton = item.isInInventory;
+              const showEquipButton = item.isInInventory && !item.isEquipped;
+              const showUnequipButton = item.isEquipped;
+              
+              return (
+                <div key={item.id} 
+                  className={`bg-slate-800 border-2 ${
+                    item.isEquipped ? 'border-yellow-400' : 'border-purple-500'
+                  } rounded-lg p-3 flex flex-col relative`}
+                >
+                  {/* Info Button - Top Right */}
+                  <button
+                    onClick={() => setShowDescModal(item)}
+                    className="absolute top-2 right-2 w-6 h-6 bg-blue-500 hover:bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold z-10"
                   >
-                    <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
-                      HP: {item.hp}
+                    i
+                  </button>
+
+                  {/* HP Badge - Top Left */}
+                  <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-0.5 rounded text-xs font-bold">
+                    {item.hp}
+                  </div>
+                  
+                  {/* GIF Icon */}
+                  <div className="w-full aspect-square bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center mb-2 mt-6 overflow-hidden">
+                    <img 
+                      src={itemGifs[item.id]} 
+                      alt={item.name}
+                      className="w-full h-full object-contain p-2"
+                    />
+                  </div>
+                  
+                  {/* Item Name */}
+                  <h4 className="text-white font-bold text-xs text-center mb-1 line-clamp-2 min-h-[2rem]">
+                    {item.name}
+                  </h4>
+                  
+                  {/* Price */}
+                  <div className="text-yellow-400 font-bold text-xs text-center mb-2">
+                    {item.price} XP
+                  </div>
+                  
+                  {/* Quantity */}
+                  {item.quantity > 0 && (
+                    <div className="text-green-400 font-bold text-xs text-center mb-2">
+                      Owned: ×{item.quantity}
                     </div>
-                    
-                    <div className="absolute top-2 right-2 bg-yellow-500 text-black px-2 py-1 rounded text-xs font-bold">
-                      {item.price} XP
-                    </div>
-                    
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-4xl mb-4 mt-6">
-                      {item.emoji}
-                    </div>
-                    
-                    <h4 className="text-white font-bold mb-1">{item.name}</h4>
-                    <p className="text-purple-300 text-xs mb-4">{item.category}</p>
-                    
-                    {item.quantity > 0 && (
-                      <div className="text-green-400 font-bold text-sm mb-3">
-                        Owned: ×{item.quantity}
-                      </div>
+                  )}
+                  
+                  {/* Action Buttons */}
+                  <div className="flex flex-col gap-1.5 w-full mt-auto">
+                    {showBuyButton && (
+                      <button
+                        onClick={() => handleBuyItem(item)}
+                        disabled={remaining < item.price}
+                        className={`px-2 py-1.5 rounded-full font-bold text-xs transition ${
+                          remaining >= item.price
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                        }`}
+                      >
+                        Buy
+                      </button>
                     )}
                     
-                    <div className="flex flex-col gap-2 w-full">
-                      {showBuyButton && (
-                        <button
-                          onClick={() => handleBuyItem(item)}
-                          disabled={remaining < item.price}
-                          className={`px-3 py-1 rounded-full font-bold text-sm transition ${
-                            remaining >= item.price
-                              ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white'
-                              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          }`}
-                        >
-                          Buy
-                        </button>
-                      )}
-                      
-                      {(showEquipButton || showUnequipButton) && (
-                        <button
-                          onClick={() => handleEquipItem(item.id)}
-                          className={`px-3 py-1 rounded-full font-bold text-sm transition ${
-                            showUnequipButton
-                              ? 'bg-red-600 hover:bg-red-700 text-white'
-                              : 'bg-blue-600 hover:bg-blue-700 text-white'
-                          }`}
-                        >
-                          {showUnequipButton ? 'Unequip' : 'Equip'}
-                        </button>
-                      )}
-                      
-                      {showSellButton && (
-                        <button
-                          onClick={() => handleSellItem(item.id)}
-                          className="px-3 py-1 rounded-full font-bold text-sm bg-orange-600 hover:bg-orange-700 text-white transition"
-                        >
-                          Sell
-                        </button>
-                      )}
-                    </div>
+                    {(showEquipButton || showUnequipButton) && (
+                      <button
+                        onClick={() => handleEquipItem(item.id)}
+                        className={`px-2 py-1.5 rounded-full font-bold text-xs transition ${
+                          showUnequipButton
+                            ? 'bg-red-600 hover:bg-red-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        {showUnequipButton ? 'Unequip' : 'Equip'}
+                      </button>
+                    )}
+                    
+                    {showSellButton && (
+                      <button
+                        onClick={() => handleSellItem(item.id)}
+                        className="px-2 py-1.5 rounded-full font-bold text-xs bg-orange-600 hover:bg-orange-700 text-white transition"
+                      >
+                        Sell
+                      </button>
+                    )}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {userData[user].purchaseHistory.length > 0 && (
-          <div className="mt-12 bg-slate-800 border-2 border-purple-500 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-white">Purchase History</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Total Items:</span>
-                <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold">
-                  {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-  {userData[user].purchaseHistory.map((hist) => {
-    const item = rewards.find(r => r.id === hist.itemId);
-    return (
-      <div
-        key={hist.itemId}
-       
-      >
-        <div className="px-3 py-1 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex flex-col items-center justify-center text-2xl font-bold text-white">
-          <span>{item.emoji}</span>
-          <span className="text-yellow-300 text-sm">×{hist.count}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Purchase History */}
+      {userData[user].purchaseHistory.length > 0 && (
+        <div className="mt-8 max-w-md mx-auto bg-slate-800 border-2 border-purple-500 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-bold text-white">Purchase History</h3>
+            <span className="bg-purple-600 text-white px-3 py-1 rounded-full font-bold text-xs">
+              {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-2">
+            {userData[user].purchaseHistory.map((hist) => {
+              const item = rewards.find(r => r.id === hist.itemId);
+              return (
+                <div key={hist.itemId} className="relative">
+                  <div className="aspect-square bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img 
+                      src={itemGifs[item.id]} 
+                      alt={item.name}
+                      className="w-full h-full object-contain p-1"
+                    />
+                  </div>
+                  <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
+                    ×{hist.count}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
-  }
+}
   if (appState === 'fame') {
     const allProfiles = [];
     
