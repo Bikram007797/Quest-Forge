@@ -645,69 +645,73 @@
         }
       };
 
-      const formatTimestamp = (timestamp) => {
-        if (!timestamp) return 'Just now';
-        
-        try {
-          // Handle different timestamp formats
-          let date;
-          
-          if (typeof timestamp === 'string') {
-            // Try to parse as ISO string first
-            date = new Date(timestamp);
-            
-            // If that fails, try to parse as locale string
-            if (isNaN(date.getTime())) {
-              date = new Date(timestamp.replace('Published: ', ''));
-            }
-          } else if (timestamp.toDate) {
-            // Handle Firebase Timestamp objects
-            date = timestamp.toDate();
-          } else if (timestamp.seconds) {
-            // Handle Firebase Timestamp with seconds
-            date = new Date(timestamp.seconds * 1000);
-          } else {
-            date = new Date(timestamp);
-          }
-          
-          if (isNaN(date.getTime())) {
-            console.log('Invalid timestamp:', timestamp);
-            return 'Recently';
-          }
-          
-          const now = new Date();
-          const diffInSeconds = Math.floor((now - date) / 1000);
-          
-          // Show relative time for recent posts
-          if (diffInSeconds < 60) {
-            return 'Just now';
-          } else if (diffInSeconds < 3600) {
-            const minutes = Math.floor(diffInSeconds / 60);
-            return `${minutes}m ago`;
-          } else if (diffInSeconds < 86400) {
-            const hours = Math.floor(diffInSeconds / 3600);
-            return `${hours}h ago`;
-          } else {
-            // For older posts, show full date
-            const dateStr = date.toLocaleDateString('en-US', { 
-              year: 'numeric',
-              month: 'short', 
-              day: 'numeric'
-            });
-            
-            const timeStr = date.toLocaleTimeString('en-US', {
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true
-            });
-            
-            return `${dateStr} at ${timeStr}`;
-          }
-        } catch (e) {
-          console.log('Date formatting error:', e, 'Timestamp:', timestamp);
-          return 'Recently';
-        }
-      };
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return 'Just now';
+  
+  try {
+    let date;
+    
+    // Handle the string format from published profiles (e.g., "10/15/2023, 2:30:45 PM")
+    if (typeof timestamp === 'string' && timestamp.includes('Published: ')) {
+      // Extract the actual date part after "Published: "
+      const dateString = timestamp.replace('Published: ', '');
+      date = new Date(dateString);
+    } 
+    // Handle regular date strings
+    else if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } 
+    // Handle Firebase Timestamp objects
+    else if (timestamp.toDate) {
+      date = timestamp.toDate();
+    } 
+    // Handle Firebase Timestamp with seconds
+    else if (timestamp.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    } 
+    // Fallback
+    else {
+      date = new Date(timestamp);
+    }
+    
+    if (isNaN(date.getTime())) {
+      console.log('Invalid timestamp:', timestamp);
+      return 'Recently';
+    }
+    
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    // Show relative time for recent posts
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    } else {
+      // For older posts, show full date
+      const dateStr = date.toLocaleDateString('en-US', { 
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric'
+      });
+      
+      const timeStr = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return `${dateStr} at ${timeStr}`;
+    }
+  } catch (e) {
+    console.log('Date formatting error:', e, 'Timestamp:', timestamp);
+    return 'Recently';
+  }
+};
 
       React.useEffect(() => {
         const loadDataFromFirebase = async () => {
