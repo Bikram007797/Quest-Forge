@@ -758,12 +758,27 @@ const formatTimestamp = (timestamp) => {
                 });
               }
               
-              // Sort by timestamp - handle various timestamp formats
-              allPosts.sort((a, b) => {
-                const timeA = new Date(a.timestamp).getTime();
-                const timeB = new Date(b.timestamp).getTime();
-                return timeB - timeA; // Newest first
-              });
+             // Sort by timestamp - handle various timestamp formats
+allPosts.sort((a, b) => {
+  const parseDate = (timestamp) => {
+    if (!timestamp) return new Date(0);
+    try {
+      if (typeof timestamp === 'string' && timestamp.includes('/') && timestamp.includes(',')) {
+        return new Date(timestamp);
+      } else if (typeof timestamp === 'string' && timestamp.includes('Published: ')) {
+        return new Date(timestamp.replace('Published: ', ''));
+      } else {
+        return new Date(timestamp);
+      }
+    } catch (e) {
+      return new Date(0);
+    }
+  };
+  
+  const timeA = parseDate(a.timestamp).getTime();
+  const timeB = parseDate(b.timestamp).getTime();
+  return timeB - timeA; // Newest first
+});
               
               setPosts(allPosts);
             } else {
@@ -814,12 +829,27 @@ const formatTimestamp = (timestamp) => {
                 });
               }
               
-              // Sort by timestamp
-              allPosts.sort((a, b) => {
-                const timeA = new Date(a.timestamp).getTime();
-                const timeB = new Date(b.timestamp).getTime();
-                return timeB - timeA;
-              });
+             // Sort by timestamp - handle various timestamp formats
+allPosts.sort((a, b) => {
+  const parseDate = (timestamp) => {
+    if (!timestamp) return new Date(0);
+    try {
+      if (typeof timestamp === 'string' && timestamp.includes('/') && timestamp.includes(',')) {
+        return new Date(timestamp);
+      } else if (typeof timestamp === 'string' && timestamp.includes('Published: ')) {
+        return new Date(timestamp.replace('Published: ', ''));
+      } else {
+        return new Date(timestamp);
+      }
+    } catch (e) {
+      return new Date(0);
+    }
+  };
+  
+  const timeA = parseDate(a.timestamp).getTime();
+  const timeB = parseDate(b.timestamp).getTime();
+  return timeB - timeA; // Newest first
+});
               
               setPosts(allPosts);
             }
@@ -928,12 +958,28 @@ const formatTimestamp = (timestamp) => {
               });
             }
             
-            // Sort by timestamp
-            allPosts.sort((a, b) => {
-              const timeA = new Date(a.timestamp).getTime();
-              const timeB = new Date(b.timestamp).getTime();
-              return timeB - timeA;
-            });
+            
+           // Sort by timestamp - handle various timestamp formats
+allPosts.sort((a, b) => {
+  const parseDate = (timestamp) => {
+    if (!timestamp) return new Date(0);
+    try {
+      if (typeof timestamp === 'string' && timestamp.includes('/') && timestamp.includes(',')) {
+        return new Date(timestamp);
+      } else if (typeof timestamp === 'string' && timestamp.includes('Published: ')) {
+        return new Date(timestamp.replace('Published: ', ''));
+      } else {
+        return new Date(timestamp);
+      }
+    } catch (e) {
+      return new Date(0);
+    }
+  };
+  
+  const timeA = parseDate(a.timestamp).getTime();
+  const timeB = parseDate(b.timestamp).getTime();
+  return timeB - timeA; // Newest first
+});
             
             setPosts(allPosts);
           }
