@@ -706,7 +706,7 @@ const formatTimestamp = (timestamp) => {
       return `${hours}h ago`;
     } else if (diffInSeconds < 604800) {
       const days = Math.floor(diffInSeconds / 86400);
-      return `${days}d ago';
+      return `${days}d ago`;
     } else {
       // Format as DD/MM/YYYY, HH:MM:SS
       const day = String(date.getDate()).padStart(2, '0');
