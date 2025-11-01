@@ -651,20 +651,83 @@ const formatTimestamp = (timestamp) => {
   try {
     let date;
     
-    // Handle ISO string format (new format - preferred)
+    // Handle ISO string format (new format)
     if (typeof timestamp === 'string' && timestamp.includes('T')) {
       date = new Date(timestamp);
     }
-    // Handle locale string format (old format)
+    // Handle locale string format (old format - for backward compatibility)
     else if (typeof timestamp === 'string') {
-      // Remove "Published: " or "Enshrined: " prefix if exists
-      const cleanTimestamp = timestamp.replace(/^(Published: |Enshrined: )/, '');
+      // Remove "Published: " prefix if exists
+      const cleanTimestamp = timestamp.replace('Published: ', '').replace('Enshrined: ', '');
       
-      // IMPORTANT: Detect your locale format
-      // If your format is DD/MM/YYYY (like "1/11/2025" = Nov 1, 2025)
-      // We need to swap day and month
+      // Try parsing the locale string
+      date = new Date(cleanTimestamp);
       
-      const parts = cleanTimestamp.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+):(\d+)\s*(AM|PM)?/i);
+      // If parsing failed, try alternate parsing
+      if (isNaN(date.getTime())) {
+        // Try parsing with different separators
+        const parts = cleanTimestamp.split(/[\/\-\,\s\:]+/);
+        if (parts.length >= 6) {
+          // Assume format: MM/DD/YYYY, HH:MM:SS or similar
+          date = new Date(parts[2], parts[0] - 1, parts[1], parts[3], parts[4], parts[5]);
+        }
+      }
+    }
+    // Handle Firebase Timestamp objects
+    else if (timestamp.toDate) {
+      date = timestamp.toDate();
+    }
+    // Handle Firebase Timestamp with seconds
+    else if (timestamp.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    }
+    // Handle direct Date object or milliseconds
+    else {
+      date = new Date(timestamp);
+    }
+    
+    // Validate the parsed date
+    if (isNaN(date.getTime())) {
+      console.log('Could not parse timestamp:', timestamp);
+      return 'Recently';
+    }
+    
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    // Show relative time for recent posts
+    if (diffInSeconds < 60) {
+      return 'Just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    } else if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days}d ago`;
+    } else {
+      // For older posts, show full date
+      const dateStr = date.toLocaleDateString('en-US', { 
+        year: 'numeric',
+        month: 'short', 
+        day: 'numeric'
+      });
+      
+      const timeStr = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return `${dateStr} at ${timeStr}`;
+    }
+  } catch (e) {
+    console.log('Date formatting error:', e, 'Timestamp:', timestamp);
+    return 'Recently';
+  }
+};
 
       React.useEffect(() => {
         const loadDataFromFirebase = async () => {
