@@ -651,92 +651,80 @@ const formatTimestamp = (timestamp) => {
   try {
     let date;
     
-    console.log('Raw timestamp:', timestamp); // Debug log
-    
-    // Handle the locale string format (e.g., "12/25/2024, 9:49:39 PM")
-    if (typeof timestamp === 'string') {
-      // Check if it's a locale date string with the exact format we're seeing
-      if (timestamp.includes('/') && timestamp.includes(',') && timestamp.includes(':')) {
-        // Parse the locale string format: "MM/DD/YYYY, HH:MM:SS AM/PM"
-        const [datePart, timePart] = timestamp.split(', ');
-        const [month, day, year] = datePart.split('/');
-        const [time, period] = timePart.split(' ');
-        const [hours, minutes, seconds] = time.split(':');
-        
-        // Convert to 24-hour format
-        let hour24 = parseInt(hours);
-        if (period === 'PM' && hour24 < 12) hour24 += 12;
-        if (period === 'AM' && hour24 === 12) hour24 = 0;
-        
-        date = new Date(year, month - 1, day, hour24, minutes, seconds);
-      } 
-      // Handle other string formats
-      else {
-        date = new Date(timestamp);
+    // Handle ISO string format (new format)
+    if (typeof timestamp === 'string' && timestamp.includes('T')) {
+      date = new Date(timestamp);
+    }
+    // Handle locale string format (old format - for backward compatibility)
+    else if (typeof timestamp === 'string') {
+      // Remove "Published: " prefix if exists
+      const cleanTimestamp = timestamp.replace('Published: ', '').replace('Enshrined: ', '');
+      
+      // Try parsing the locale string
+      date = new Date(cleanTimestamp);
+      
+      // If parsing failed, try alternate parsing
+      if (isNaN(date.getTime())) {
+        // Try parsing with different separators
+        const parts = cleanTimestamp.split(/[\/\-\,\s\:]+/);
+        if (parts.length >= 6) {
+          // Assume format: MM/DD/YYYY, HH:MM:SS or similar
+          date = new Date(parts[2], parts[0] - 1, parts[1], parts[3], parts[4], parts[5]);
+        }
       }
-    } 
+    }
     // Handle Firebase Timestamp objects
-    else if (timestamp && typeof timestamp === 'object') {
-      if (timestamp.toDate) {
-        date = timestamp.toDate();
-      } 
-      else if (timestamp.seconds) {
-        date = new Date(timestamp.seconds * 1000);
-      }
-      else {
-        date = new Date(timestamp);
-      }
-    } 
-    // Fallback
+    else if (timestamp.toDate) {
+      date = timestamp.toDate();
+    }
+    // Handle Firebase Timestamp with seconds
+    else if (timestamp.seconds) {
+      date = new Date(timestamp.seconds * 1000);
+    }
+    // Handle direct Date object or milliseconds
     else {
       date = new Date(timestamp);
     }
     
-    console.log('Parsed date:', date); // Debug log
-    
+    // Validate the parsed date
     if (isNaN(date.getTime())) {
-      console.log('Invalid timestamp, returning raw:', timestamp);
-      // If we can't parse it, return a simplified version
-      if (typeof timestamp === 'string') {
-        // Extract just the date part if it's a long string
-        const parts = timestamp.split(',');
-        return parts[0] || 'Recently';
-      }
+      console.log('Could not parse timestamp:', timestamp);
       return 'Recently';
     }
     
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    const diffInHours = Math.floor(diffInSeconds / 3600);
-    const diffInDays = Math.floor(diffInSeconds / 86400);
-    
-    console.log('Time difference:', { diffInSeconds, diffInMinutes, diffInHours, diffInDays }); // Debug log
     
     // Show relative time for recent posts
     if (diffInSeconds < 60) {
       return 'Just now';
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
-    } else if (diffInDays < 7) {
-      return `${diffInDays}d ago`;
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes}m ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours}h ago`;
+    } else if (diffInSeconds < 604800) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days}d ago`;
     } else {
-      // For older posts, show simplified date
-      return date.toLocaleDateString('en-US', { 
+      // For older posts, show full date
+      const dateStr = date.toLocaleDateString('en-US', { 
+        year: 'numeric',
         month: 'short', 
-        day: 'numeric',
-        year: 'numeric'
+        day: 'numeric'
       });
+      
+      const timeStr = date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      return `${dateStr} at ${timeStr}`;
     }
   } catch (e) {
     console.log('Date formatting error:', e, 'Timestamp:', timestamp);
-    // Return a safe fallback
-    if (typeof timestamp === 'string') {
-      const parts = timestamp.split(',');
-      return parts[0] || 'Recently';
-    }
     return 'Recently';
   }
 };
