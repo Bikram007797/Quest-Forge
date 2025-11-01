@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QuestForge - Wall of Fame</title>
+  <title>QuestForge - Hall of Legends</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -11,12 +11,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Cinzel:wght@400;600;700&display=swap');
+    
     html, body, #root {
         height: 100%;
         margin: 0;
         padding: 0;
-        background: linear-gradient(135deg, #000000, #000000, #000000);
+        background: #0a0e1a;
         background-attachment: fixed;
+        font-family: 'Cinzel', serif;
     }
     
     * {
@@ -32,24 +35,141 @@
 
     body {
         overflow-x: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    @keyframes pulse-glow { 
+      0%, 100% { 
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.8),
+                     0 0 40px rgba(255, 140, 0, 0.5); 
+      } 
+      50% { 
+        text-shadow: 0 0 30px rgba(255, 215, 0, 1),
+                     0 0 60px rgba(255, 140, 0, 0.8),
+                     0 0 80px rgba(255, 69, 0, 0.6); 
+      } 
+    }
+
+    @keyframes torch-flicker {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(0.95); }
+    }
+
+    .torch-glow {
+      animation: torch-flicker 2s ease-in-out infinite;
+    }
+
+    .fantasy-card {
+      background: linear-gradient(135deg, #1a1f35 0%, #2d1810 100%);
+      border: 3px solid;
+      border-image: linear-gradient(135deg, #d4af37, #8b6914, #d4af37) 1;
+      box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+    }
+
+    .fantasy-card::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      background: linear-gradient(135deg, #d4af37, #8b6914, #d4af37);
+      border-radius: inherit;
+      z-index: -1;
+      opacity: 0.5;
+      filter: blur(8px);
+    }
+
+    .parchment-bg {
+      background: linear-gradient(135deg, #2a1810 0%, #1a1410 100%);
+      border: 2px solid #8b6914;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5),
+                  0 4px 16px rgba(212, 175, 55, 0.2);
+    }
+
+    .medieval-button {
+      background: linear-gradient(135deg, #8b6914 0%, #d4af37 50%, #8b6914 100%);
+      border: 2px solid #ffd700;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      color: #1a1410;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .medieval-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .medieval-button:hover::before {
+      left: 100%;
+    }
+
+    .medieval-button:active {
+      box-shadow: 0 2px 6px rgba(212, 175, 55, 0.4),
+                  inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
 
     .post-card {
-        background: linear-gradient(135deg, #000000, #1f1f1f, #4d4d4d);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, #1a1f35 0%, #2d1810 100%);
+        border: 3px solid;
+        border-image: linear-gradient(135deg, #d4af37, #8b6914, #d4af37) 1;
+        box-shadow: 0 8px 32px rgba(212, 175, 55, 0.3),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
         border-radius: 24px;
         overflow: hidden;
         margin-bottom: 24px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        position: relative;
+    }
+
+    .post-card::before {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
+      background: linear-gradient(135deg, #d4af37, #8b6914, #d4af37);
+      border-radius: inherit;
+      z-index: -1;
+      opacity: 0.5;
+      filter: blur(8px);
+    }
+
+    .post-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: 
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 2px,
+          rgba(212, 175, 55, 0.03) 2px,
+          rgba(212, 175, 55, 0.03) 4px
+        );
+      pointer-events: none;
     }
     
     .post-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
-        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 12px 48px rgba(212, 175, 55, 0.5);
     }
     
     .post-card:active {
@@ -60,7 +180,8 @@
         display: flex;
         align-items: center;
         padding: 16px;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(139, 105, 20, 0.15));
+        border-bottom: 2px solid #8b6914;
     }
     
     .post-avatar {
@@ -68,15 +189,15 @@
         height: 48px;
         border-radius: 14px;
         margin-right: 12px;
-        border: 3px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+        border: 3px solid #d4af37;
+        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.4);
         transition: all 0.3s ease;
         flex-shrink: 0;
     }
     
     .post-avatar:hover {
         transform: scale(1.05);
-        box-shadow: 0 6px 24px rgba(102, 126, 234, 0.6);
+        box-shadow: 0 6px 24px rgba(212, 175, 55, 0.6);
     }
     
     .post-user-info {
@@ -87,40 +208,44 @@
     .post-username {
         font-weight: 700;
         font-size: 16px;
-        color: #ffffff;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         letter-spacing: 0.3px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        font-family: 'MedievalSharp', cursive;
     }
     
     .post-timestamp {
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.6);
+        color: #c9a961;
         margin-top: 4px;
         font-weight: 500;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        font-family: 'Cinzel', serif;
     }
     
     .post-image {
         position: relative;
         width: 100%;
         aspect-ratio: 16 / 9;
-        background: linear-gradient(135deg, #1e1e2f, #3f2b96, #6a11cb);
+        background: linear-gradient(135deg, #2a1810 0%, #1a1410 100%);
         display: flex;
         align-items: center;
         justify-content: center;
         overflow: hidden;
+        border-top: 2px solid #8b6914;
+        border-bottom: 2px solid #8b6914;
     }
     
     .post-image::before {
         content: '';
         position: absolute;
         inset: 0;
-        background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+        background: radial-gradient(circle at 30% 50%, rgba(212, 175, 55, 0.1) 0%, transparent 60%);
         animation: shimmer 3s ease-in-out infinite;
     }
 
@@ -134,8 +259,8 @@
         height: 140px;
         border-radius: 50%;
         object-fit: cover;
-        border: 6px solid rgba(255, 255, 255, 0.9);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        border: 6px solid #d4af37;
+        box-shadow: 0 8px 32px rgba(212, 175, 55, 0.5);
         position: relative;
         z-index: 1;
         transition: all 0.4s ease;
@@ -149,9 +274,8 @@
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 1px;
-        background: rgba(255, 255, 255, 0.05);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(139, 105, 20, 0.3);
+        border-bottom: 2px solid #8b6914;
     }
 
     @media (min-width: 480px) {
@@ -163,10 +287,11 @@
     .stat-item {
         text-align: center;
         padding: 16px 8px;
-        background: rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, rgba(42, 24, 16, 0.8), rgba(26, 20, 16, 0.8));
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        border: 1px solid rgba(212, 175, 55, 0.2);
     }
 
     .stat-item::before {
@@ -176,7 +301,7 @@
         left: -100%;
         width: 100%;
         height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.2), transparent);
         transition: left 0.5s ease;
     }
 
@@ -185,21 +310,20 @@
     }
 
     .stat-item:hover {
-        background: rgba(102, 126, 234, 0.2);
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(139, 105, 20, 0.2));
         transform: scale(1.05);
     }
     
     .stat-value {
         font-weight: 800;
         font-size: 20px;
-        background: linear-gradient(135deg, #667eea 0%, #f093fb 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #ffd700;
         margin-bottom: 4px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        font-family: 'Cinzel', serif;
     }
 
     @media (min-width: 480px) {
@@ -210,11 +334,12 @@
     
     .stat-label {
         font-size: 9px;
-        color: rgba(255, 255, 255, 0.5);
+        color: #c9a961;
         text-transform: uppercase;
         letter-spacing: 0.8px;
         font-weight: 600;
         margin-bottom: 4px;
+        font-family: 'Cinzel', serif;
     }
 
     @media (min-width: 480px) {
@@ -225,20 +350,21 @@
     
     .stat-subtext {
         font-size: 11px;
-        color: #f093fb;
+        color: #d4af37;
         font-weight: 600;
         margin-top: 4px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         padding: 0 4px;
+        font-family: 'Cinzel', serif;
     }
     
     .post-actions {
         display: flex;
         justify-content: space-around;
         padding: 16px 8px;
-        background: rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, rgba(42, 24, 16, 0.8), rgba(26, 20, 16, 0.8));
         gap: 8px;
     }
     
@@ -247,18 +373,23 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: linear-gradient(135deg, #8b6914 0%, #d4af37 50%, #8b6914 100%);
+        border: 2px solid #ffd700;
         padding: 10px 16px;
         border-radius: 12px;
         font-size: 13px;
-        font-weight: 600;
-        color: rgba(255, 255, 255, 0.8);
+        font-weight: 700;
+        color: #1a1410;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
         flex: 1;
         min-width: 0;
+        font-family: 'Cinzel', serif;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     @media (min-width: 480px) {
@@ -271,31 +402,34 @@
     .action-btn::before {
         content: '';
         position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
     }
 
     .action-btn:hover::before {
-        opacity: 1;
+        left: 100%;
     }
     
     .action-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.3);
         transform: translateY(-2px);
-        color: #ffffff;
+        box-shadow: 0 6px 16px rgba(212, 175, 55, 0.6),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     
     .action-btn:active {
         transform: translateY(0);
+        box-shadow: 0 2px 6px rgba(212, 175, 55, 0.4),
+                    inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .action-btn.liked {
-        background: linear-gradient(135deg, rgba(237, 73, 86, 0.2), rgba(237, 73, 86, 0.3));
-        border-color: rgba(237, 73, 86, 0.5);
-        color: #ff6b7a;
+        background: linear-gradient(135deg, #8b2914 0%, #d43737 50%, #8b2914 100%);
+        border-color: #ff4444;
+        color: #ffcccc;
     }
     
     .action-icon {
@@ -354,7 +488,7 @@
         font-size: 28px;
         animation: particleFloat 1.2s ease-out forwards;
         z-index: 1000;
-        filter: drop-shadow(0 2px 8px rgba(255, 107, 122, 0.8));
+        filter: drop-shadow(0 2px 8px rgba(255, 215, 0, 0.8));
     }
 
     @keyframes particleFloat {
@@ -385,17 +519,19 @@
     }
 
     .total-likes-badge {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%);
+        background: linear-gradient(135deg, #8b6914 0%, #d4af37 100%);
         backdrop-filter: blur(10px);
-        color: white;
+        color: #1a1410;
         padding: 8px 12px;
         border-radius: 14px;
         font-size: 12px;
         font-weight: 700;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 16px rgba(212, 175, 55, 0.5);
+        border: 2px solid #ffd700;
         transition: all 0.3s ease;
         white-space: nowrap;
+        font-family: 'Cinzel', serif;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     @media (min-width: 480px) {
@@ -408,7 +544,7 @@
 
     .total-likes-badge:hover {
         transform: scale(1.05);
-        box-shadow: 0 6px 24px rgba(102, 126, 234, 0.6);
+        box-shadow: 0 6px 24px rgba(212, 175, 55, 0.7);
     }
     
     .refresh-btn {
@@ -418,16 +554,17 @@
         width: 56px;
         height: 56px;
         border-radius: 18px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.5);
+        background: linear-gradient(135deg, #8b6914 0%, #d4af37 100%);
+        color: #1a1410;
+        border: 3px solid #ffd700;
+        box-shadow: 0 8px 32px rgba(212, 175, 55, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 22px;
         z-index: 100;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: bold;
     }
 
     @media (min-width: 480px) {
@@ -443,7 +580,7 @@
 
     .refresh-btn:hover {
         transform: scale(1.1) rotate(90deg);
-        box-shadow: 0 12px 48px rgba(102, 126, 234, 0.7);
+        box-shadow: 0 12px 48px rgba(212, 175, 55, 0.7);
     }
     
     .refresh-btn:active {
@@ -453,7 +590,7 @@
     .empty-state {
         text-align: center;
         padding: 60px 20px;
-        color: rgba(255, 255, 255, 0.6);
+        color: #c9a961;
     }
 
     @media (min-width: 480px) {
@@ -465,7 +602,7 @@
     .empty-icon {
         font-size: 64px;
         margin-bottom: 20px;
-        opacity: 0.4;
+        opacity: 0.6;
         animation: float 3s ease-in-out infinite;
     }
 
@@ -482,10 +619,12 @@
     }
 
     .empty-state h3 {
-        color: #ffffff;
+        color: #ffd700;
         font-size: 18px;
         font-weight: 700;
         margin-bottom: 12px;
+        font-family: 'MedievalSharp', cursive;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     }
 
     @media (min-width: 480px) {
@@ -493,14 +632,19 @@
             font-size: 22px;
         }
     }
+
+    .empty-state p {
+        font-family: 'Cinzel', serif;
+        color: #c9a961;
+    }
     
     .loading-spinner {
         display: inline-block;
         width: 24px;
         height: 24px;
-        border: 3px solid rgba(255,255,255,.2);
+        border: 3px solid rgba(212, 175, 55, .2);
         border-radius: 50%;
-        border-top-color: #fff;
+        border-top-color: #d4af37;
         animation: spin 0.8s linear infinite;
     }
     
@@ -508,36 +652,33 @@
         to { transform: rotate(360deg); }
     }
 
-.header-title {
-  animation: sideSlide 3s ease-in-out infinite;
-  display: inline-block;
-}
     .header {
-        background: rgba(15, 12, 41, 0.8);
+        background: linear-gradient(135deg, #1a1f35 0%, #2d1810 100%);
         backdrop-filter: blur(20px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 3px solid #8b6914;
         position: sticky;
         top: 0;
         z-index: 50;
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 24px rgba(212, 175, 55, 0.3);
     }
 
-   .header-title {
-    font-size: 24px;  /* Changed from 18px */
-    font-weight: 800;
-    background: linear-gradient(135deg, #20E321 100%, #20E321 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 0.8px;
-}
-
-@media (min-width: 480px) {
     .header-title {
-        font-size: 32px;  /* Changed from 24px */
-        letter-spacing: 1px;
+        font-size: 24px;
+        font-weight: 800;
+        color: #ffd700;
+        letter-spacing: 0.8px;
+        font-family: 'MedievalSharp', cursive;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8),
+                     0 0 10px rgba(255, 215, 0, 0.5);
+        animation: pulse-glow 2s ease-in-out infinite;
     }
-}
+
+    @media (min-width: 480px) {
+        .header-title {
+            font-size: 32px;
+            letter-spacing: 1px;
+        }
+    }
 
     .loading-container {
         display: flex;
@@ -554,10 +695,12 @@
     }
 
     .loading-container h2 {
-        color: #ffffff;
+        color: #ffd700;
         font-size: 20px;
         font-weight: 700;
         text-align: center;
+        font-family: 'MedievalSharp', cursive;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
     }
 
     @media (min-width: 480px) {
@@ -567,9 +710,10 @@
     }
 
     .loading-container p {
-        color: rgba(255, 255, 255, 0.6);
+        color: #c9a961;
         font-size: 14px;
         text-align: center;
+        font-family: 'Cinzel', serif;
     }
 
     @media (min-width: 480px) {
@@ -583,7 +727,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const firebaseConfig = {
+const firebaseConfig = {
       apiKey: "AIzaSyBO-M54POwDhyEkfgyH84fblkOKrfgclck",
       authDomain: "questforge-bd8e8.firebaseapp.com",
       projectId: "questforge-bd8e8",
@@ -736,7 +880,7 @@ const formatTimestamp = (timestamp) => {
             const doc = await docRef.get();
             
             if (doc.exists) {
-              console.log('✅ Data loaded from Firebase - Wall of Fame');
+              console.log('✅ Data loaded from Firebase - Hall of Legends');
               const data = doc.data();
               setUserData(data);
               
@@ -1013,21 +1157,35 @@ allPosts.sort((a, b) => {
 
       if (loading) {
         return (
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="loading-container">
+          <div className="min-h-screen bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 15h15l-12 9 5 15-13-10-13 10 5-15-12-9h15z' fill='%23d4af37' fill-opacity='1'/%3E%3C/svg%3E")`,
+              backgroundSize: '60px 60px'
+            }}></div>
+            <div className="loading-container relative z-10">
+              <div className="text-6xl mb-4 torch-glow">🏆</div>
               <div className="loading-spinner"></div>
-              <h2>Loading Wall of Fame...</h2>
-              <p>Connecting to QuestForge</p>
+              <h2>Loading Hall of Legends...</h2>
+              <p>Retrieving Ancient Records</p>
             </div>
           </div>
         );
       }
 
       return (
-        <div className="min-h-screen pb-24">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-amber-950 to-slate-900 pb-24 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-5" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l5 15h15l-12 9 5 15-13-10-13 10 5-15-12-9h15z' fill='%23d4af37' fill-opacity='1'/%3E%3C/svg%3E")`,
+            backgroundSize: '60px 60px'
+          }}></div>
+
           <div className="header">
-            <div className="max-w-lg mx-auto px-4 py-4 flex justify-between items-center">
-              <h1 className="header-title">🏆 WALL OF FAME</h1>
+            <div className="max-w-lg mx-auto px-4 py-4 flex justify-center items-center">
+              <div className="text-center">
+                <div className="text-3xl mb-1 torch-glow">👑</div>
+                <h1 className="header-title">HALL OF LEGENDS</h1>
+                <div className="h-0.5 w-32 mx-auto bg-gradient-to-r from-transparent via-yellow-600 to-transparent mt-2"></div>
+              </div>
             </div>
           </div>
 
@@ -1044,13 +1202,13 @@ allPosts.sort((a, b) => {
             )}
           </div>
 
-          <div className="max-w-lg mx-auto px-4 py-6">
+          <div className="max-w-lg mx-auto px-4 py-6 relative z-10">
             {posts.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">🏆</div>
-                <h3>No Published Profiles Yet</h3>
+                <div className="empty-icon torch-glow">🏆</div>
+                <h3>No Legendary Heroes Yet</h3>
                 <p>
-                  When users publish their profiles in QuestForge, they'll appear here.
+                  When champions publish their profiles in QuestForge, they shall be enshrined here for eternity.
                 </p>
               </div>
             ) : (
@@ -1112,11 +1270,11 @@ allPosts.sort((a, b) => {
                     
                     <button className="action-btn">
                       <span className="action-icon">💬</span>
-                      <span className="action-btn-text">Comment</span>
+                      <span className="action-btn-text">comment</span>
                     </button>
                     
                     <button className="action-btn">
-                      <span className="action-icon">↗️</span>
+                      <span className="action-icon">⚔️</span>
                       <span className="action-btn-text">Share</span>
                     </button>
                   </div>
