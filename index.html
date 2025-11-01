@@ -1600,8 +1600,8 @@
         <h3 className="text-lg font-bold text-yellow-400" style={{fontFamily: 'Cinzel, serif'}}>Purchase Ledger</h3>
       </div>
       <span className="medieval-button px-3 py-1 rounded-full font-bold text-xs">
-        {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)} Total
-      </span>
+  {userData[user].inventory.reduce((sum, inv) => sum + inv.quantity, 0)} Total
+</span>
     </div>
     
     <div className="parchment-bg border-2 border-amber-800 rounded-xl overflow-hidden">
@@ -1614,8 +1614,8 @@
           </tr>
         </thead>
         <tbody>
-          {userData[user].purchaseHistory.map((hist, index) => {
-            const item = rewards.find(r => r.id === hist.itemId);
+          {userData[user].inventory.map((inv, index) => {
+  const item = rewards.find(r => r.id === inv.itemId);
             return (
               <tr key={hist.itemId} className={`border-b border-amber-900 ${index % 2 === 0 ? 'bg-amber-950/30' : 'bg-transparent'} hover:bg-amber-900/40 transition`}>
                 <td className="px-3 py-2 text-yellow-300 text-xs font-semibold" style={{fontFamily: 'Cinzel, serif'}}>
@@ -1632,8 +1632,8 @@
                 </td>
                 <td className="px-3 py-2 text-center">
                   <span className="medieval-button text-xs font-bold px-2 py-1 rounded-full inline-block">
-                    ×{hist.count}
-                  </span>
+  ×{inv.quantity}
+</span>
                 </td>
               </tr>
             );
