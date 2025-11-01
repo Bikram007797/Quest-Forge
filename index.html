@@ -1592,39 +1592,57 @@
               )}
             </div>
 
-            {userData[user].purchaseHistory.length > 0 && (
-              <div className="mt-8 max-w-md mx-auto fantasy-card rounded-2xl p-5 relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl torch-glow">📜</span>
-                    <h3 className="text-lg font-bold text-yellow-400" style={{fontFamily: 'Cinzel, serif'}}>Purchase Ledger</h3>
+{filterCategory === 'Purchased' && userData[user].purchaseHistory.length > 0 && (
+  <div className="mt-6 max-w-md mx-auto fantasy-card rounded-2xl p-5 relative z-10">
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2">
+        <span className="text-2xl torch-glow">📜</span>
+        <h3 className="text-lg font-bold text-yellow-400" style={{fontFamily: 'Cinzel, serif'}}>Purchase Ledger</h3>
+      </div>
+      <span className="medieval-button px-3 py-1 rounded-full font-bold text-xs">
+        {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)} Total
+      </span>
+    </div>
+    
+    <div className="parchment-bg border-2 border-amber-800 rounded-xl overflow-hidden">
+      <table className="w-full">
+        <thead>
+          <tr className="bg-gradient-to-r from-amber-900 to-amber-800 border-b-2 border-amber-700">
+            <th className="text-left px-3 py-2 text-amber-300 text-xs font-bold" style={{fontFamily: 'Cinzel, serif'}}>Item</th>
+            <th className="text-center px-3 py-2 text-amber-300 text-xs font-bold" style={{fontFamily: 'Cinzel, serif'}}>Icon</th>
+            <th className="text-center px-3 py-2 text-amber-300 text-xs font-bold" style={{fontFamily: 'Cinzel, serif'}}>Qty</th>
+          </tr>
+        </thead>
+        <tbody>
+          {userData[user].purchaseHistory.map((hist, index) => {
+            const item = rewards.find(r => r.id === hist.itemId);
+            return (
+              <tr key={hist.itemId} className={`border-b border-amber-900 ${index % 2 === 0 ? 'bg-amber-950/30' : 'bg-transparent'} hover:bg-amber-900/40 transition`}>
+                <td className="px-3 py-2 text-yellow-300 text-xs font-semibold" style={{fontFamily: 'Cinzel, serif'}}>
+                  {item.name}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <div className="w-10 h-10 mx-auto bg-gradient-to-br from-amber-800 to-amber-600 rounded-lg flex items-center justify-center overflow-hidden border-2 border-amber-500">
+                    <img 
+                      src={itemGifs[item.id]} 
+                      alt={item.name}
+                      className="w-full h-full object-contain p-1"
+                    />
                   </div>
-                  <span className="medieval-button px-3 py-1 rounded-full font-bold text-xs">
-                    {userData[user].purchaseHistory.reduce((sum, hist) => sum + hist.count, 0)}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <span className="medieval-button text-xs font-bold px-2 py-1 rounded-full inline-block">
+                    ×{hist.count}
                   </span>
-                </div>
-                
-                <div className="grid grid-cols-4 gap-2">
-                  {userData[user].purchaseHistory.map((hist) => {
-                    const item = rewards.find(r => r.id === hist.itemId);
-                    return (
-                      <div key={hist.itemId} className="relative">
-                        <div className="aspect-square bg-gradient-to-br from-amber-800 to-amber-600 rounded-lg flex items-center justify-center overflow-hidden border-2 border-amber-500">
-                          <img 
-                            src={itemGifs[item.id]} 
-                            alt={item.name}
-                            className="w-full h-full object-contain p-1"
-                          />
-                        </div>
-                        <span className="absolute -top-1 -right-1 medieval-button text-xs font-bold px-2 py-0.5 rounded-full">
-                          ×{hist.count}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
           </div>
         );
       }
