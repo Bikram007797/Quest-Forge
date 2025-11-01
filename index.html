@@ -1616,8 +1616,8 @@
         <tbody>
           {userData[user].inventory.map((inv, index) => {
   const item = rewards.find(r => r.id === inv.itemId);
-            return (
-              <tr key={hist.itemId} className={`border-b border-amber-900 ${index % 2 === 0 ? 'bg-amber-950/30' : 'bg-transparent'} hover:bg-amber-900/40 transition`}>
+  return (
+    <tr key={inv.itemId} className={`border-b border-amber-900 ${index % 2 === 0 ? 'bg-amber-950/30' : 'bg-transparent'} hover:bg-amber-900/40 transition`}>
                 <td className="px-3 py-2 text-yellow-300 text-xs font-semibold" style={{fontFamily: 'Cinzel, serif'}}>
                   {item.name}
                 </td>
