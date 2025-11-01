@@ -651,29 +651,20 @@ const formatTimestamp = (timestamp) => {
   try {
     let date;
     
-    // [Keep all your existing date parsing logic...]
-    
-    // Validate the parsed date
-    if (isNaN(date.getTime())) {
-      console.log('Could not parse timestamp:', timestamp);
-      return 'Recently';
+    // Handle ISO string format (new format - preferred)
+    if (typeof timestamp === 'string' && timestamp.includes('T')) {
+      date = new Date(timestamp);
     }
-    
-    // Always format as DD/MM/YYYY, HH:MM:SS regardless of how recent
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    const seconds = String(date.getSeconds()).padStart(2, '0');
-    
-    return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
-  } catch (e) {
-    console.log('Date formatting error:', e, 'Timestamp:', timestamp);
-    return 'Recently';
-  }
-};
+    // Handle locale string format (old format)
+    else if (typeof timestamp === 'string') {
+      // Remove "Published: " or "Enshrined: " prefix if exists
+      const cleanTimestamp = timestamp.replace(/^(Published: |Enshrined: )/, '');
+      
+      // IMPORTANT: Detect your locale format
+      // If your format is DD/MM/YYYY (like "1/11/2025" = Nov 1, 2025)
+      // We need to swap day and month
+      
+      const parts = cleanTimestamp.match(/(\d+)\/(\d+)\/(\d+),?\s+(\d+):(\d+):(\d+)\s*(AM|PM)?/i);
 
       React.useEffect(() => {
         const loadDataFromFirebase = async () => {
