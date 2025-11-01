@@ -778,7 +778,7 @@
           totalXP: userData[user].totalXP,
           equippedCount: userData[user].equippedItems.length,
           totalPurchased: totalPurchased,
-          timestamp: new Date().toLocaleString()
+         timestamp: new Date().toISOString()
         };
         setUserData(newUserData);
         
